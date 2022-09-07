@@ -7,6 +7,10 @@ workers_dev = true
 compatibility_date = "2022-08-07"
 compatibility_flags = []
 
+kv_namespaces = [
+    { binding = "CLOCKWATCH_KV", id = "efc6579299204224a9264499c101ced2" }
+]
+
 [build]
 command = "node scripts/build.js production"
 

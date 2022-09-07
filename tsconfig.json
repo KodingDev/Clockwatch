@@ -4,20 +4,23 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "lib": ["esnext"],
-    "types": ["@cloudflare/workers-types"],
-
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "@cloudflare/workers-types",
+      "slshx/node_modules/discord-api-types",
+      "discord-api-types"
+    ],
     // For Slshx JSX
     "jsx": "react",
     "jsxFactory": "createElement",
     "jsxFragmentFactory": "Fragment",
-
     // Required by esbuild
     "isolatedModules": true,
-
     "noEmit": true,
     "strict": true,
-    "esModuleInterop": true,
+    "esModuleInterop": true
   },
   "include": [
     "src",
