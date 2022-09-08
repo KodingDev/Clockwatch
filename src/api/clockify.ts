@@ -1,5 +1,5 @@
 import { UserInteractions } from "./kv";
-import { Project, TimeEntry, User, Workspace } from "./types/clockify";
+import { PayRate, Project, TimeEntry, User, Workspace } from "./types/clockify";
 
 const uuidRegex = new RegExp(
   "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
@@ -29,6 +29,13 @@ export class ClockifyAPI {
 
     // Check if the decoded key is a valid UUID
     return uuidRegex.test(uuid);
+  }
+
+  getHourlyRate(workspace: Workspace, user: User): PayRate {
+    return (
+      workspace.memberships.find((value) => value.userId === user.id)
+        ?.hourlyRate ?? { amount: 0, currency: "USD" }
+    );
   }
 
   getUser(): Promise<User> {

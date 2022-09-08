@@ -53,10 +53,7 @@ function summaryProject(): CommandHandler<Env> {
         new Date(),
       );
 
-      // TODO: Alternate currencies
-      const rate = workspace.memberships.find(
-        (value) => value.userId === user.id,
-      )?.hourlyRate ?? { amount: 0, currency: "USD" };
+      const rate = interactions.clockify.getHourlyRate(workspace, user);
       const summary = getProjectSummary(timeEntries, project, rate);
 
       if (!summary.length) {
@@ -77,12 +74,11 @@ function summaryProject(): CommandHandler<Env> {
           <Field name="Time Entries">
             {summary
               .sort((a, b) => b.durationMS - a.durationMS)
-              .map(
-                (value) =>
-                  `**${value.description}** (${formatElapsed(
-                    value.durationMS,
-                  )}): $${round(value.price, 2)}`,
-              )
+              .map((value) => {
+                const elapsed = formatElapsed(value.durationMS);
+                const price = round(value.price, 2);
+                return `**${value.description}** (${elapsed}): $${price}`;
+              })
               .join("\n")}
           </Field>
         </SuccessMessage>
@@ -134,9 +130,7 @@ function summaryWorkspace(): CommandHandler<Env> {
         new Date(),
       );
 
-      const rate = workspace.memberships.find(
-        (value) => value.userId === user.id,
-      )?.hourlyRate ?? { amount: 0, currency: "USD" };
+      const rate = interactions.clockify.getHourlyRate(workspace, user);
       const summary = getWorkspaceSummary(
         timeEntries,
         projects,
@@ -165,12 +159,11 @@ function summaryWorkspace(): CommandHandler<Env> {
               <Field name={projectName}>
                 {projectSummary
                   .sort((a, b) => b.durationMS - a.durationMS)
-                  .map(
-                    (value) =>
-                      `**${value.description}** (${formatElapsed(
-                        value.durationMS,
-                      )}): $${round(value.price, 2)}`,
-                  )
+                  .map((value) => {
+                    const elapsed = formatElapsed(value.durationMS);
+                    const price = round(value.price, 2);
+                    return `**${value.description}** (${elapsed}): $${price}`;
+                  })
                   .join("\n")}
               </Field>
             ),
