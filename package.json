@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "miniflare --watch --debug --wrangler-env=development",
     "deploy:global": "node --no-warnings --experimental-vm-modules scripts/deploy.js",
+    "tunnel": "cloudflared tunnel run --url 127.0.0.1:8787",
     "lint:fix": "yarn run --silent lint:prettier:fix && yarn run --silent lint:eslint:fix",
     "lint:prettier:fix": "prettier -w \"{src,types}/**/*.{js,jsx,ts,tsx}\" -u",
     "lint:eslint:fix": "eslint --fix \"{src,types}/**/*.{js,jsx,ts,tsx}\""

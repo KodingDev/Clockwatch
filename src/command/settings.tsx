@@ -5,10 +5,8 @@ import {
   useString,
 } from "slshx";
 import { UserInteractions } from "../api/kv";
-import clockify from "../api/clockify";
-import { ErrorMessage, SuccessMessage } from "../discord/messages";
+import { ErrorMessage, InfoMessage } from "../discord/messages";
 
-// `Env` contains bindings and is declared in types/env.d.ts
 function setApiKey(): CommandHandler<Env> {
   useDescription("Sets your Clockify API key.");
 
@@ -22,13 +20,13 @@ function setApiKey(): CommandHandler<Env> {
       return <ErrorMessage>Invalid user.</ErrorMessage>;
     }
 
-    if (!clockify.validateApiKey(apiKey)) {
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, user);
+    if (!interactions.clockify.validateApiKey(apiKey)) {
       return <ErrorMessage>Invalid API key.</ErrorMessage>;
     }
 
-    const interactions = new UserInteractions(env.CLOCKWATCH_KV, user);
     await interactions.setApiKey(apiKey);
-    return <SuccessMessage>API key set.</SuccessMessage>;
+    return <InfoMessage>API key set.</InfoMessage>;
   };
 }
 

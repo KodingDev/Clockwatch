@@ -1,5 +1,6 @@
 import { createHandler } from "slshx";
 import { settings } from "./command/settings";
+import { user } from "./command/user";
 
 const handler = createHandler({
   // Replaced by esbuild when bundling, see scripts/build.js (do not edit)
@@ -9,7 +10,7 @@ const handler = createHandler({
   testServerId: SLSHX_TEST_SERVER_ID,
 
   // Add your commands here
-  commands: { settings },
+  commands: { settings, user },
 });
 
 export default { fetch: handler };
