@@ -9,7 +9,6 @@
   "overrides": [
     {
       "plugins": [
-        "react",
         "@typescript-eslint"
       ],
       "files": [
@@ -25,7 +24,6 @@
       },
       "extends": [
         "eslint:recommended",
-        "plugin:react/recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
@@ -37,8 +35,6 @@
             "usePrettierrc": true
           }
         ],
-        "react/display-name": "off",
-        "react/react-in-jsx-scope": "off",
         "@typescript-eslint/no-unused-vars": ["warn", {
           "varsIgnorePattern": "createElement"
         }],

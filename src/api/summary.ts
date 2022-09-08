@@ -1,4 +1,10 @@
-import { PayRate, Project, TimeEntry, TimeInterval } from "./types/clockify";
+import {
+  PayRate,
+  Project,
+  TimeEntry,
+  TimeInterval,
+  Workspace,
+} from "./types/clockify";
 import { ReportData } from "./types/summary";
 import _ from "lodash";
 
@@ -32,5 +38,29 @@ export const getProjectSummary = (
         durationMS,
       };
     })
+    .value();
+};
+
+export const getWorkspaceSummary = (
+  timeEntries: TimeEntry[],
+  projects: Project[],
+  workspace: Workspace,
+  rate: PayRate,
+): ReportData[] => {
+  const projectIds = projects.map((p) => p.id);
+  const workspaceEntries = timeEntries.filter((t) =>
+    projectIds.includes(t.projectId),
+  );
+
+  return _.chain(workspaceEntries)
+    .groupBy((t) => t.projectId)
+    .map((entries, projectId) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (!project) {
+        throw new Error("Project not found");
+      }
+      return getProjectSummary(entries, project, rate);
+    })
+    .flatten()
     .value();
 };
