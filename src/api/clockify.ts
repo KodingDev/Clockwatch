@@ -1,5 +1,5 @@
 import { UserInteractions } from "./kv";
-import { User, Workspace } from "./types/clockify";
+import { Project, TimeEntry, User, Workspace } from "./types/clockify";
 
 const uuidRegex = new RegExp(
   "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
@@ -39,6 +39,44 @@ export class ClockifyAPI {
     return this.get("/workspaces");
   }
 
+  getProjects(workspaceId: string): Promise<Project[]> {
+    return this.get(`/workspaces/${workspaceId}/projects?page-size=5000`);
+  }
+
+  getTimeEntries(
+    workspaceId: string,
+    userId: string,
+    start: Date,
+    end: Date,
+  ): Promise<TimeEntry[]> {
+    return this.get(
+      `/workspaces/${workspaceId}/user/${userId}/time-entries?page-size=5000&start=${start.toISOString()}&end=${end.toISOString()}`,
+    );
+  }
+
+  getUsers(workspaceId: string): Promise<User[]> {
+    return this.get(
+      `/workspaces/${workspaceId}/users?memberships=WORKSPACE&page-size=5000`,
+    );
+  }
+
+  async getWorkspaceById(id: string): Promise<Workspace | undefined> {
+    const workspaces = await this.getWorkspaces();
+    return workspaces.find((w) => w.id === id);
+  }
+
+  getProjectById(workspaceId: string, projectId: string): Promise<Project> {
+    return this.get(`/workspaces/${workspaceId}/projects/${projectId}`);
+  }
+
+  async getUserById(
+    workspaceId: string,
+    userId: string,
+  ): Promise<User | undefined> {
+    const users = await this.getUsers(workspaceId);
+    return users.find((u) => u.id === userId);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get(path: string): Promise<any> {
     const apiKey = await this.interactions.getApiKey();
@@ -48,6 +86,14 @@ export class ClockifyAPI {
       method: "GET",
       headers: {
         "X-Api-Key": apiKey,
+      },
+      cf: {
+        cacheKey: `${this.interactions.user.id}:${path}`,
+        cacheTtlByStatus: {
+          "200-299": 60,
+          "400-499": 5,
+          "500-599": 0,
+        },
       },
     });
 

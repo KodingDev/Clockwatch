@@ -13,10 +13,12 @@
     "lint:eslint:fix": "eslint --fix \"{src,types}/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
+    "lodash": "^4.17.21",
     "slshx": "^0.3.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.3.0",
+    "@types/lodash": "^4.14.184",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
     "esbuild": "^0.14.8",

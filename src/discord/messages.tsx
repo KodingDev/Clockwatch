@@ -1,4 +1,11 @@
-import { $field, Child, createElement, Embed, Message } from "slshx";
+import {
+  $field,
+  Child,
+  createElement,
+  Embed,
+  EmbedProps,
+  Message,
+} from "slshx";
 import { APIEmbedField } from "discord-api-types/v9";
 
 const AUTHOR_IMAGE =
@@ -17,19 +24,23 @@ type EmbedChild = (
     })
 )[];
 
-export const ResponseMessage = (props: {
-  title?: string;
-  children?: EmbedChild;
-  type: ResponseType | null;
-  ephemeral?: boolean;
-}) => (
+export const ResponseMessage = (
+  props: {
+    children?: EmbedChild;
+    type: ResponseType | null;
+    ephemeral?: boolean;
+  } & EmbedProps,
+) => (
   <Message ephemeral={props.ephemeral ?? true}>
     <Embed
+      {...props}
       author={
-        props.title && {
-          name: props.title,
-          iconUrl: AUTHOR_IMAGE,
-        }
+        typeof props.author === "string"
+          ? {
+              name: props.author,
+              iconUrl: AUTHOR_IMAGE,
+            }
+          : props.author
       }
       color={props.type ?? ResponseType.Info}
     >
@@ -38,43 +49,35 @@ export const ResponseMessage = (props: {
   </Message>
 );
 
-export const ErrorMessage = (props: {
-  children?: EmbedChild;
-  ephemeral?: boolean;
-}) => (
-  <ResponseMessage
-    title="Error"
-    type={ResponseType.Error}
-    ephemeral={props.ephemeral}
-  >
+export const ErrorMessage = (
+  props: {
+    children?: EmbedChild;
+    ephemeral?: boolean;
+  } & EmbedProps,
+) => (
+  <ResponseMessage {...props} author="Error" type={ResponseType.Error}>
     {props.children}
   </ResponseMessage>
 );
 
-export const SuccessMessage = (props: {
-  title?: string;
-  children?: EmbedChild;
-  ephemeral?: boolean;
-}) => (
-  <ResponseMessage
-    title={props.title}
-    type={ResponseType.Success}
-    ephemeral={props.ephemeral ?? false}
-  >
+export const SuccessMessage = (
+  props: {
+    children?: EmbedChild;
+    ephemeral?: boolean;
+  } & EmbedProps,
+) => (
+  <ResponseMessage ephemeral={false} {...props} type={ResponseType.Success}>
     {props.children}
   </ResponseMessage>
 );
 
-export const InfoMessage = (props: {
-  title?: string;
-  children?: EmbedChild;
-  ephemeral?: boolean;
-}) => (
-  <ResponseMessage
-    title={props.title}
-    type={ResponseType.Info}
-    ephemeral={props.ephemeral ?? false}
-  >
+export const InfoMessage = (
+  props: {
+    children?: EmbedChild;
+    ephemeral?: boolean;
+  } & EmbedProps,
+) => (
+  <ResponseMessage {...props} type={ResponseType.Info}>
     {props.children}
   </ResponseMessage>
 );

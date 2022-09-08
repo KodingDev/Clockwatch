@@ -4,10 +4,7 @@ import { ClockifyAPI } from "./clockify";
 export class UserInteractions {
   readonly clockify: ClockifyAPI;
 
-  constructor(
-    private readonly kv: KVNamespace,
-    private readonly user: APIUser,
-  ) {
+  constructor(private readonly kv: KVNamespace, readonly user: APIUser) {
     this.clockify = new ClockifyAPI(this);
   }
 

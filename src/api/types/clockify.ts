@@ -7,7 +7,7 @@ export interface User {
 export interface Membership {
   hourlyRate: PayRate;
   costRate: PayRate;
-  membershipType: string;
+  membershipType: "WORKSPACE" | "PROJECT";
   targetId: string;
   userId: string;
 }
@@ -21,4 +21,29 @@ export interface Workspace {
   id: string;
   name: string;
   memberships: Membership[];
+}
+
+export interface Project {
+  id: string;
+  workspaceId: string;
+  name: string;
+  hourlyRate: PayRate;
+  billable: boolean;
+  clientId?: string;
+  clientName: string;
+}
+
+export interface TimeEntry {
+  billable: boolean;
+  description: string;
+  id: string;
+  projectId: string;
+  userId: string;
+  workspaceId: string;
+  timeInterval: TimeInterval;
+}
+
+export interface TimeInterval {
+  start: string;
+  end?: string;
 }
