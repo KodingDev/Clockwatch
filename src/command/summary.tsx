@@ -6,6 +6,9 @@ import { useProject, useUserOptional, useWorkspace } from "../discord/hooks";
 import { getProjectSummary, getWorkspaceSummary } from "../api/summary";
 import { formatElapsed } from "../util/date";
 import _, { round } from "lodash";
+import { ReportData } from "../api/types/summary";
+
+// TODO: Clean up this mess
 
 function summaryProject(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for a specific project.");
@@ -174,7 +177,99 @@ function summaryWorkspace(): CommandHandler<Env> {
   };
 }
 
+function summaryAll(): CommandHandler<Env> {
+  useDescription("Fetch clocked time summary for all workspaces.");
+
+  return async function* (interaction, env) {
+    const user = interaction.member?.user ?? interaction.user;
+    if (!user) {
+      return <ErrorMessage>Invalid user.</ErrorMessage>;
+    }
+
+    yield;
+
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, user);
+    return wrapClockifyBlock(async () => {
+      const workspaces = await interactions.clockify.getWorkspaces();
+      if (!workspaces.length) {
+        return <ErrorMessage>No workspaces found.</ErrorMessage>;
+      }
+
+      const user = await interactions.clockify.getUser();
+      if (!user) {
+        return <ErrorMessage>User not found.</ErrorMessage>;
+      }
+
+      const summaryPromises = await Promise.all(
+        workspaces.map(async (workspace) => {
+          const projects = await interactions.clockify.getProjects(
+            workspace.id,
+          );
+          if (!projects.length) {
+            return [];
+          }
+
+          const timeEntries = await interactions.clockify.getTimeEntries(
+            workspace.id,
+            user.id,
+            new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+            new Date(),
+          );
+          if (!timeEntries.length) {
+            return [];
+          }
+
+          const rate = interactions.clockify.getHourlyRate(workspace, user);
+          return _.chain(
+            getWorkspaceSummary(timeEntries, projects, workspace, rate),
+          )
+            .sortBy((value) => -value.durationMS)
+            .transform((result: ReportData[], value) => {
+              result.push(value);
+              return result.length < 5;
+            })
+            .value();
+        }),
+      );
+
+      const summary = _.flatten(summaryPromises);
+      if (!summary.length) {
+        return <ErrorMessage>No time entries found.</ErrorMessage>;
+      }
+
+      const totalMoney = summary.reduce((a, b) => a + b.price, 0);
+      const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+
+      return (
+        <SuccessMessage
+          author={`Summary • ${user.name}`}
+          footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(
+            totalElapsed,
+          )}`}
+        >
+          Showing time entries for the last 7 days.
+          {Object.entries(
+            _.groupBy(summary, (value) => value.workspaceName),
+          ).map(([workspaceName, workspaceSummary]) => (
+            <Field name={workspaceName}>
+              {workspaceSummary
+                .sort((a, b) => b.durationMS - a.durationMS)
+                .map((value) => {
+                  const elapsed = formatElapsed(value.durationMS);
+                  const price = round(value.price, 2);
+                  return `\`${value.projectName}\` ${value.description} (${elapsed}): $${price}`;
+                })
+                .join("\n")}
+            </Field>
+          ))}
+        </SuccessMessage>
+      );
+    });
+  };
+}
+
 export const summary = {
   project: summaryProject,
   workspace: summaryWorkspace,
+  all: summaryAll,
 };

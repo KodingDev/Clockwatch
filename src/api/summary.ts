@@ -59,7 +59,12 @@ export const getWorkspaceSummary = (
       if (!project) {
         throw new Error("Project not found");
       }
-      return getProjectSummary(entries, project, rate);
+
+      const projectSummary = getProjectSummary(entries, project, rate);
+      return projectSummary.map((s) => ({
+        ...s,
+        workspaceName: workspace.name,
+      }));
     })
     .flatten()
     .value();

@@ -1,4 +1,5 @@
 export interface ReportData {
+  workspaceName: string;
   projectName: string;
   clientName: string;
   description: string;
