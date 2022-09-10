@@ -89,13 +89,16 @@ export class ClockifyAPI {
     const apiKey = await this.interactions.getApiKey();
     if (!apiKey) throw new ClockifyError("No API key set", 400);
 
-    const response = await fetch(`${ClockifyAPI.BASE_URL}${path}`, {
+    const cacheId = `${path.includes("?") ? "&" : "?"}cache_id=${
+      this.interactions.user.id
+    }`;
+    const response = await fetch(`${ClockifyAPI.BASE_URL}${path}${cacheId}`, {
       method: "GET",
       headers: {
         "X-Api-Key": apiKey,
       },
       cf: {
-        cacheKey: `${this.interactions.user.id}:${path}`,
+        cacheEverything: true,
         cacheTtlByStatus: {
           "200-299": 60,
           "400-499": 5,

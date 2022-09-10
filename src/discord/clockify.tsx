@@ -24,7 +24,7 @@ export async function wrapClockifyBlock<T>(block: () => T): Promise<T> {
       return (
         <ErrorMessage>
           {errors[e.status] ||
-            `An unknown error occurred (code ${e.status}). Please try again later.`}
+            `An error occurred (code ${e.status} - ${e.message}). Please try again later.`}
         </ErrorMessage>
       );
     } else {
