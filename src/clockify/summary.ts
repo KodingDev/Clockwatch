@@ -34,7 +34,7 @@ export const getProjectSummary = (timeEntries: TimeEntry[], project: Project, ra
       return <ReportData>{
         projectName: project.name,
         clientName: project.clientName ?? "",
-        description,
+        description: description.length ? description : undefined,
         price: durationMS * (hourlyRate / 3600000),
         durationMS,
       };
@@ -61,7 +61,7 @@ export const getWorkspaceSummary = (
   const projectIds = projects.map((p) => p.id);
   const workspaceEntries = timeEntries.filter((t) => projectIds.includes(t.projectId));
 
-  return _.chain(workspaceEntries)
+  const projectEntries = _.chain(workspaceEntries)
     .groupBy((t) => t.projectId)
     .map((entries, projectId) => {
       // Get project
@@ -81,6 +81,34 @@ export const getWorkspaceSummary = (
     })
     .flatten()
     .value();
+
+  const nonProjectEntries = timeEntries.filter((t) => !t.projectId);
+  if (nonProjectEntries.length) {
+    // Create a summary for the non-project entries
+    const nonProjectSummary = _.chain(nonProjectEntries)
+      .groupBy((t) => t.description)
+      .map((entries, description) => {
+        // Calculate total duration
+        const durationMS = entries.reduce((total, t) => total + getDuration(t.timeInterval), 0);
+
+        // Returns a whole number by default, divide by 100 to get a decimal
+        const hourlyRate = rate.amount / 100;
+        return <ReportData>{
+          projectName: "No Project",
+          workspaceName: workspace.name,
+          clientName: "",
+          description: description.length ? description : undefined,
+          price: durationMS * (hourlyRate / 3600000),
+          durationMS,
+        };
+      })
+      .value();
+
+    // Add the non-project summary to the project entries
+    projectEntries.push(...nonProjectSummary);
+  }
+
+  return projectEntries;
 };
 
 export const estimateTotal = (summary: ReportData[], range: TimeRangeDefinition): number | undefined => {

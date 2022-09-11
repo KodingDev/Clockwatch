@@ -74,7 +74,7 @@ export class ClockifyAPI {
    */
   getTimeEntries(workspaceId: string, userId: string, start: Date, end: Date): Promise<TimeEntry[]> {
     return this.get(
-      `/workspaces/${workspaceId}/user/${userId}/time-entries?page-size=5000&start=${start.toISOString()}&end=${end.toISOString()}`,
+      `/workspaces/${workspaceId}/user/${userId}/time-entries?page-size=5000&start=${start.toISOString()}&end=${end.toISOString()}&project-required=false&task-required=false`,
     );
   }
 

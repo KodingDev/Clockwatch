@@ -52,15 +52,16 @@ function summaryProject(): CommandHandler<Env> {
         footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for {user.name}.
-        {estimatedTotal &&
-          ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName} on this project.`}
+        {estimatedTotal
+          ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName} on this project.`
+          : ""}
         <Field name="Time Entries">
           {summary
             .sort((a, b) => b.durationMS - a.durationMS)
             .map((value) => {
               const elapsed = formatElapsed(value.durationMS);
               const price = round(value.price, 2);
-              return `**${value.description}** (${elapsed}): $${price}`;
+              return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
             })
             .join("\n")}
         </Field>
@@ -87,10 +88,6 @@ function summaryWorkspace(): CommandHandler<Env> {
       : await interactions.clockify.getUser();
 
     const projects = await interactions.clockify.getProjects(workspaceId);
-    if (!projects.length) {
-      return <ErrorMessage>No projects found.</ErrorMessage>;
-    }
-
     const range = timeRange.get();
     const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
 
@@ -112,7 +109,7 @@ function summaryWorkspace(): CommandHandler<Env> {
         footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for `{user.name}`.
-        {estimatedTotal && ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.`}
+        {estimatedTotal ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
         {Object.entries(projectSummary).map(([projectName, projectSummary]) => (
           <Field name={projectName}>
             {projectSummary
@@ -120,7 +117,7 @@ function summaryWorkspace(): CommandHandler<Env> {
               .map((value) => {
                 const elapsed = formatElapsed(value.durationMS);
                 const price = round(value.price, 2);
-                return `**${value.description}** (${elapsed}): $${price}`;
+                return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
               })
               .join("\n")}
           </Field>
@@ -183,7 +180,7 @@ function summaryAll(): CommandHandler<Env> {
         footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName}.
-        {estimatedTotal && ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.`}
+        {estimatedTotal ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
         {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => {
           const sortedProjects = _.chain(workspaceSummary)
             .sortBy((value) => -value.durationMS)
@@ -202,7 +199,7 @@ function summaryAll(): CommandHandler<Env> {
                 .map((value) => {
                   const elapsed = formatElapsed(value.durationMS);
                   const price = round(value.price, 2);
-                  return `\`${value.projectName}\` **${value.description}** (${elapsed}) - $${price}`;
+                  return `\`${value.projectName}\` **${value.description ?? "Unlabelled"}** (${elapsed}) - $${price}`;
                 })
                 .join("\n")}
               {"\n"}
