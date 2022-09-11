@@ -55,33 +55,6 @@ export const timeRanges: TimeRangeDefinition[] = [
     progress: defaultProgressFunction,
   },
   {
-    name: "Today",
-    sentenceName: "today",
-    get: () => {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
-
-      return { start, end };
-    },
-  },
-  {
-    name: "Yesterday",
-    sentenceName: "yesterday",
-    get: () => {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      start.setDate(start.getDate() - 1);
-
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
-      end.setDate(start.getDate());
-      return { start, end };
-    },
-  },
-  {
     name: "This Week",
     sentenceName: "this week",
     get: () => {
@@ -115,6 +88,33 @@ export const timeRanges: TimeRangeDefinition[] = [
       return { start, end };
     },
     progress: defaultProgressFunction,
+  },
+  {
+    name: "Today",
+    sentenceName: "today",
+    get: () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      return { start, end };
+    },
+  },
+  {
+    name: "Yesterday",
+    sentenceName: "yesterday",
+    get: () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - 1);
+
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      end.setDate(start.getDate());
+      return { start, end };
+    },
   },
   {
     name: "Last 7 Days",
