@@ -10,9 +10,7 @@
     "tunnel": "cloudflared tunnel run --url 127.0.0.1:8787",
     "lint:fix": "yarn run --silent lint:prettier:fix && yarn run --silent lint:eslint:fix",
     "lint:prettier:fix": "prettier -w \"{src,types}/**/*.{js,jsx,ts,tsx}\" -u",
-    "lint:eslint:fix": "eslint --fix \"{src,types}/**/*.{js,jsx,ts,tsx}\"",
-    "postinstall": "yarn run --silent postinstall:slshx",
-    "postinstall:slshx": "cd node_modules/slshx && npm i && npm run build && npm run build:types"
+    "lint:eslint:fix": "eslint --fix \"{src,types}/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
     "@zerite/slshx": "^0.3.1",
