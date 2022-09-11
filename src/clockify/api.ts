@@ -2,10 +2,7 @@ import { UserInteractions } from "./interactions";
 import { PayRate, Project, TimeEntry, User, Workspace } from "./types";
 import { BotError, BotErrorCode } from "@/discord";
 
-const UUID_REGEX = new RegExp(
-  "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
-  "i",
-);
+const UUID_REGEX = new RegExp("^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "i");
 
 export class ClockifyAPI {
   private static readonly BASE_URL = "https://api.clockify.me/api/v1";
@@ -40,10 +37,7 @@ export class ClockifyAPI {
    * @param user The user to get the rate for
    */
   getHourlyRate(workspace: Workspace, user: User): PayRate {
-    return (
-      workspace.memberships.find((value) => value.userId === user.id)
-        ?.hourlyRate ?? workspace.hourlyRate
-    );
+    return workspace.memberships.find((value) => value.userId === user.id)?.hourlyRate ?? workspace.hourlyRate;
   }
 
   /**
@@ -78,12 +72,7 @@ export class ClockifyAPI {
    * @param start The start date
    * @param end The end date
    */
-  getTimeEntries(
-    workspaceId: string,
-    userId: string,
-    start: Date,
-    end: Date,
-  ): Promise<TimeEntry[]> {
+  getTimeEntries(workspaceId: string, userId: string, start: Date, end: Date): Promise<TimeEntry[]> {
     return this.get(
       `/workspaces/${workspaceId}/user/${userId}/time-entries?page-size=5000&start=${start.toISOString()}&end=${end.toISOString()}`,
     );
@@ -94,9 +83,7 @@ export class ClockifyAPI {
    * @param workspaceId The workspace to get the users for
    */
   getUsers(workspaceId: string): Promise<User[]> {
-    return this.get(
-      `/workspaces/${workspaceId}/users?memberships=WORKSPACE&page-size=5000`,
-    );
+    return this.get(`/workspaces/${workspaceId}/users?memberships=WORKSPACE&page-size=5000`);
   }
 
   /**
@@ -143,9 +130,7 @@ export class ClockifyAPI {
     const apiKey = await this.interactions.getApiKey();
     if (!apiKey) throw new BotError(BotErrorCode.ApiKeyNotSet);
 
-    const cacheId = `${path.includes("?") ? "&" : "?"}cache_id=${
-      this.interactions.user.id
-    }`;
+    const cacheId = `${path.includes("?") ? "&" : "?"}cache_id=${this.interactions.user.id}`;
     const response = await fetch(`${ClockifyAPI.BASE_URL}${path}${cacheId}`, {
       method: "GET",
       headers: {
@@ -161,8 +146,7 @@ export class ClockifyAPI {
       },
     });
 
-    if (response.status === 401 || response.status === 403)
-      throw new BotError(BotErrorCode.InvalidApiKey);
+    if (response.status === 401 || response.status === 403) throw new BotError(BotErrorCode.InvalidApiKey);
     if (response.status !== 200) throw new BotError(BotErrorCode.UnknownError);
 
     return response.json();

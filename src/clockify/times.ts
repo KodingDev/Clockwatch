@@ -1,13 +1,40 @@
 export interface TimeRangeDefinition {
+  /**
+   * The name of the time range.
+   */
   name: string;
+
+  /**
+   * A sentence applicable name for the time range.
+   */
   sentenceName: string;
+
+  /**
+   * Get the current time range.
+   */
   get: () => TimeRange;
+
+  /**
+   * Get the progress of the current time range.
+   * @param range The time range.
+   * @returns A number between 0 and 1 describing how far into the time range we are.
+   */
+  progress?: (range: TimeRange) => number;
 }
 
 export interface TimeRange {
   start: Date;
   end: Date;
 }
+
+const defaultProgressFunction = (range: TimeRange): number => {
+  const now = new Date();
+  const start = range.start;
+  const end = range.end;
+  const total = end.getTime() - start.getTime();
+  const current = now.getTime() - start.getTime();
+  return Math.min(1, current / total);
+};
 
 export const timeRanges: TimeRangeDefinition[] = [
   {
@@ -25,6 +52,7 @@ export const timeRanges: TimeRangeDefinition[] = [
 
       return { start, end };
     },
+    progress: defaultProgressFunction,
   },
   {
     name: "Today",
@@ -49,8 +77,7 @@ export const timeRanges: TimeRangeDefinition[] = [
 
       const end = new Date();
       end.setHours(23, 59, 59, 999);
-      end.setDate(end.getDate() - 1);
-
+      end.setDate(start.getDate());
       return { start, end };
     },
   },
@@ -60,14 +87,16 @@ export const timeRanges: TimeRangeDefinition[] = [
     get: () => {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      start.setDate(start.getDate() - start.getDay());
+      start.setDate(start.getDate() - start.getDay() + (start.getDay() === 0 ? -6 : 1));
 
       const end = new Date();
       end.setHours(23, 59, 59, 999);
-      end.setDate(end.getDate() + (6 - end.getDay()));
+      end.setDate(start.getDate() + 6);
 
+      console.log(start, end);
       return { start, end };
     },
+    progress: defaultProgressFunction,
   },
   {
     name: "This Year",
@@ -85,6 +114,7 @@ export const timeRanges: TimeRangeDefinition[] = [
 
       return { start, end };
     },
+    progress: defaultProgressFunction,
   },
   {
     name: "Last 7 Days",

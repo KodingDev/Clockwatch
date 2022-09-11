@@ -1,9 +1,4 @@
-import {
-  CommandHandler,
-  createElement,
-  useDescription,
-  useString,
-} from "@zerite/slshx";
+import { CommandHandler, createElement, useDescription, useString } from "@zerite/slshx";
 import { UserInteractions } from "@/clockify";
 import { InfoMessage } from "@/discord";
 import { getInteractionUser } from "@/util";

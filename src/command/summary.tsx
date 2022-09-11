@@ -1,9 +1,4 @@
-import {
-  CommandHandler,
-  createElement,
-  Field,
-  useDescription,
-} from "@zerite/slshx";
+import { CommandHandler, createElement, Field, useDescription } from "@zerite/slshx";
 import {
   ErrorMessage,
   SuccessMessage,
@@ -12,12 +7,7 @@ import {
   useUserOptional,
   useWorkspace,
 } from "@/discord";
-import {
-  getProjectSummary,
-  getWorkspaceSummary,
-  ReportData,
-  UserInteractions,
-} from "@/clockify";
+import { estimateTotal, getProjectSummary, getWorkspaceSummary, UserInteractions } from "@/clockify";
 import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
 
@@ -32,28 +22,17 @@ function summaryProject(): CommandHandler<Env> {
   return async function* (interaction, env) {
     yield;
 
-    const interactions = new UserInteractions(
-      env.CLOCKWATCH_KV,
-      getInteractionUser(interaction),
-    );
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
 
     const workspace = await interactions.clockify.getWorkspaceById(workspaceId);
     const user = userId
       ? await interactions.clockify.getUserById(workspaceId, userId)
       : await interactions.clockify.getUser();
 
-    const project = await interactions.clockify.getProjectById(
-      workspaceId,
-      projectId,
-    );
+    const project = await interactions.clockify.getProjectById(workspaceId, projectId);
 
     const range = timeRange.get();
-    const timeEntries = await interactions.clockify.getTimeEntries(
-      workspaceId,
-      user.id,
-      range.start,
-      range.end,
-    );
+    const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
 
     let rate = interactions.clockify.getHourlyRate(workspace, user);
     if (rate.amount === 0) rate = project.hourlyRate;
@@ -65,15 +44,16 @@ function summaryProject(): CommandHandler<Env> {
 
     const totalMoney = summary.reduce((a, b) => a + b.price, 0);
     const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const estimatedTotal = estimateTotal(summary, timeRange);
 
     return (
       <SuccessMessage
         author={`Project Summary • ${project.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(
-          totalElapsed,
-        )}`}
+        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for {user.name}.
+        {estimatedTotal &&
+          ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName} on this project.`}
         <Field name="Time Entries">
           {summary
             .sort((a, b) => b.durationMS - a.durationMS)
@@ -99,10 +79,7 @@ function summaryWorkspace(): CommandHandler<Env> {
   return async function* (interaction, env) {
     yield;
 
-    const interactions = new UserInteractions(
-      env.CLOCKWATCH_KV,
-      getInteractionUser(interaction),
-    );
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
 
     const workspace = await interactions.clockify.getWorkspaceById(workspaceId);
     const user = userId
@@ -115,12 +92,7 @@ function summaryWorkspace(): CommandHandler<Env> {
     }
 
     const range = timeRange.get();
-    const timeEntries = await interactions.clockify.getTimeEntries(
-      workspaceId,
-      user.id,
-      range.start,
-      range.end,
-    );
+    const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
 
     const rate = interactions.clockify.getHourlyRate(workspace, user);
     const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
@@ -132,15 +104,15 @@ function summaryWorkspace(): CommandHandler<Env> {
     const projectSummary = _.groupBy(summary, (value) => value.projectName);
     const totalMoney = summary.reduce((a, b) => a + b.price, 0);
     const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const estimatedTotal = estimateTotal(summary, timeRange);
 
     return (
       <SuccessMessage
         author={`Workspace Summary • ${workspace.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(
-          totalElapsed,
-        )}`}
+        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for `{user.name}`.
+        {estimatedTotal && ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.`}
         {Object.entries(projectSummary).map(([projectName, projectSummary]) => (
           <Field name={projectName}>
             {projectSummary
@@ -166,10 +138,7 @@ function summaryAll(): CommandHandler<Env> {
   return async function* (interaction, env) {
     yield;
 
-    const interactions = new UserInteractions(
-      env.CLOCKWATCH_KV,
-      getInteractionUser(interaction),
-    );
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
 
     const workspaces = await interactions.clockify.getWorkspaces();
     if (!workspaces.length) {
@@ -186,25 +155,15 @@ function summaryAll(): CommandHandler<Env> {
           return [];
         }
 
-        const timeEntries = await interactions.clockify.getTimeEntries(
-          workspace.id,
-          user.id,
-          range.start,
-          range.end,
-        );
+        const timeEntries = await interactions.clockify.getTimeEntries(workspace.id, user.id, range.start, range.end);
         if (!timeEntries.length) {
           return [];
         }
 
         const rate = interactions.clockify.getHourlyRate(workspace, user);
-        return _.chain(
-          getWorkspaceSummary(timeEntries, projects, workspace, rate),
-        )
+        return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, rate))
+          .filter((value) => value.price > 0)
           .sortBy((value) => -value.durationMS)
-          .transform((result: ReportData[], value) => {
-            result.push(value);
-            return result.length < 5;
-          })
           .value();
       }),
     );
@@ -216,29 +175,50 @@ function summaryAll(): CommandHandler<Env> {
 
     const totalMoney = summary.reduce((a, b) => a + b.price, 0);
     const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const estimatedTotal = estimateTotal(summary, timeRange);
 
     return (
       <SuccessMessage
         author={`Summary • ${user.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(
-          totalElapsed,
-        )}`}
+        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName}.
-        {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(
-          ([workspaceName, workspaceSummary]) => (
+        {estimatedTotal && ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.`}
+        {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => {
+          const sortedProjects = _.chain(workspaceSummary)
+            .sortBy((value) => -value.durationMS)
+            .value();
+
+          const display = sortedProjects.slice(0, 5);
+          const remaining = sortedProjects.length - display.length;
+          const remainingTotal = sortedProjects.slice(5).reduce((a, b) => a + b.price, 0);
+
+          const remainingElapsed = sortedProjects.slice(5).reduce((a, b) => a + b.durationMS, 0);
+          const totalElapsed = sortedProjects.reduce((a, b) => a + b.durationMS, 0);
+
+          return (
             <Field name={workspaceName}>
-              {workspaceSummary
-                .sort((a, b) => b.durationMS - a.durationMS)
+              {display
                 .map((value) => {
                   const elapsed = formatElapsed(value.durationMS);
                   const price = round(value.price, 2);
-                  return `\`${value.projectName}\` ${value.description} (${elapsed}): $${price}`;
+                  return `\`${value.projectName}\` **${value.description}** (${elapsed}) - $${price}`;
                 })
                 .join("\n")}
+              {"\n"}
+              {remaining > 0 &&
+                `*...and ${remaining} more projects for $${round(remainingTotal, 2)} (${formatElapsed(
+                  remainingElapsed,
+                )})*\n`}
+              {"\n"}**Total**: $
+              {round(
+                workspaceSummary.reduce((a, b) => a + b.price, 0),
+                2,
+              )}{" "}
+              • {formatElapsed(totalElapsed)}
             </Field>
-          ),
-        )}
+          );
+        })}
       </SuccessMessage>
     );
   };

@@ -1,11 +1,5 @@
 import { useString } from "@zerite/slshx";
-import {
-  Project,
-  timeRanges,
-  User,
-  UserInteractions,
-  Workspace,
-} from "@/clockify";
+import { Project, timeRanges, User, UserInteractions, Workspace } from "@/clockify";
 import { getInteractionUser } from "@/util";
 
 /**
@@ -25,9 +19,7 @@ export const useWorkspace = (name: string, description: string) => {
       try {
         const workspaces = await interactions.clockify.getWorkspaces();
         return workspaces
-          .filter((value) =>
-            value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""),
-          )
+          .filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
           .map((value) => ({ name: value.name, value: value.id }));
       } catch (e) {
         return [];
@@ -45,11 +37,7 @@ export const useWorkspace = (name: string, description: string) => {
  * @param description The parameter description
  * @param workspace An optional workspace to filter projects by
  */
-export const useProject = (
-  name: string,
-  description: string,
-  workspace?: string | null,
-) => {
+export const useProject = (name: string, description: string, workspace?: string | null) => {
   const tmp: string = useString(name, description, {
     required: true,
     autocomplete: async (interaction, env: Env) => {
@@ -67,18 +55,14 @@ export const useProject = (
           // Otherwise add all projects from all workspaces
           workspaces = await interactions.clockify.getWorkspaces();
           for (const workspace of workspaces) {
-            projects.push(
-              ...(await interactions.clockify.getProjects(workspace.id)),
-            );
+            projects.push(...(await interactions.clockify.getProjects(workspace.id)));
           }
         }
 
         return (
           projects
             // Filter projects by the current value of the parameter
-            .filter((value) =>
-              value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""),
-            )
+            .filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
             .map((value) => {
               if (workspace) {
                 // If we have a workspace, return to the format of "Client - Project"
@@ -88,9 +72,7 @@ export const useProject = (
                 };
               } else {
                 // Otherwise return to the format of "Workspace - Project"
-                const workspace = workspaces.find(
-                  (w) => w.id === value.workspaceId,
-                )!;
+                const workspace = workspaces.find((w) => w.id === value.workspaceId)!;
                 return {
                   name: `${workspace.name} - ${value.name}`,
                   value: value.id,
@@ -114,11 +96,7 @@ export const useProject = (
  * @param description The parameter description
  * @param workspace An optional workspace to filter users by
  */
-export const useUserOptional = (
-  name: string,
-  description: string,
-  workspace?: string | null,
-) => {
+export const useUserOptional = (name: string, description: string, workspace?: string | null) => {
   const tmp: string | null = useString(name, description, {
     autocomplete: async (interaction, env: Env) => {
       const user = getInteractionUser(interaction);
@@ -142,9 +120,7 @@ export const useUserOptional = (
         return (
           users
             // Filter users by the current value of the parameter
-            .filter((value) =>
-              value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""),
-            )
+            .filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
             .map((value) => {
               if (workspace) {
                 // If we have a workspace, return to the format of "User"
@@ -152,10 +128,7 @@ export const useUserOptional = (
               } else {
                 // Otherwise return to the format of "Workspace - User"
                 const workspace = workspaces.find((w) =>
-                  value.memberships.find(
-                    (m) =>
-                      m.targetId === w.id && m.membershipType === "WORKSPACE",
-                  ),
+                  value.memberships.find((m) => m.targetId === w.id && m.membershipType === "WORKSPACE"),
                 )!;
 
                 return {
@@ -184,9 +157,7 @@ export const useTimeRangeOptional = (name: string, description: string) => {
     required: false,
     autocomplete: () =>
       timeRanges
-        .filter((value) =>
-          value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""),
-        )
+        .filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
         .map((value) => ({ name: value.name, value: value.name })),
   });
   return timeRanges.find((value) => value.name === tmp) ?? timeRanges[0];

@@ -1,12 +1,6 @@
 import _ from "lodash";
-import {
-  PayRate,
-  Project,
-  ReportData,
-  TimeEntry,
-  TimeInterval,
-  Workspace,
-} from "./types";
+import { PayRate, Project, ReportData, TimeEntry, TimeInterval, Workspace } from "./types";
+import { TimeRangeDefinition } from "@/clockify/times";
 
 /**
  * Gets the duration of a time interval in milliseconds.
@@ -26,21 +20,14 @@ const getDuration = (timeInterval: TimeInterval): number => {
  * @param rate The rate to use for the project.
  * @returns A list of ReportData objects, grouped by description.
  */
-export const getProjectSummary = (
-  timeEntries: TimeEntry[],
-  project: Project,
-  rate: PayRate,
-): ReportData[] => {
+export const getProjectSummary = (timeEntries: TimeEntry[], project: Project, rate: PayRate): ReportData[] => {
   // Find relevant project entries
   const projectEntries = timeEntries.filter((t) => t.projectId === project.id);
   return _.chain(projectEntries)
     .groupBy((t) => t.description)
     .map((entries, description) => {
       // Calculate total duration
-      const durationMS = entries.reduce(
-        (total, t) => total + getDuration(t.timeInterval),
-        0,
-      );
+      const durationMS = entries.reduce((total, t) => total + getDuration(t.timeInterval), 0);
 
       // Returns a whole number by default, divide by 100 to get a decimal
       const hourlyRate = (project.hourlyRate.amount || rate.amount) / 100;
@@ -72,9 +59,7 @@ export const getWorkspaceSummary = (
 ): ReportData[] => {
   // Find relevant workspace entries
   const projectIds = projects.map((p) => p.id);
-  const workspaceEntries = timeEntries.filter((t) =>
-    projectIds.includes(t.projectId),
-  );
+  const workspaceEntries = timeEntries.filter((t) => projectIds.includes(t.projectId));
 
   return _.chain(workspaceEntries)
     .groupBy((t) => t.projectId)
@@ -86,11 +71,7 @@ export const getWorkspaceSummary = (
       }
 
       // Create a summary for the project
-      const projectSummary = getProjectSummary(
-        entries,
-        project,
-        rate.amount === 0 ? project.hourlyRate : rate,
-      );
+      const projectSummary = getProjectSummary(entries, project, rate.amount === 0 ? project.hourlyRate : rate);
 
       // Map the project summary and add the workspace name
       return projectSummary.map((s) => ({
@@ -100,4 +81,15 @@ export const getWorkspaceSummary = (
     })
     .flatten()
     .value();
+};
+
+export const estimateTotal = (summary: ReportData[], range: TimeRangeDefinition): number | undefined => {
+  // Get the time range and progress
+  const timeRange = range.get();
+  const progress = range.progress ? range.progress(timeRange) : 1;
+  if (progress === 1) return undefined;
+
+  // Calculate the estimated total
+  const total = summary.reduce((total, s) => total + s.price, 0);
+  return total / progress;
 };
