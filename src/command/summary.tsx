@@ -150,10 +150,6 @@ function summaryAll(): CommandHandler<Env> {
     const summaryPromises = await Promise.all(
       workspaces.map(async (workspace) => {
         const projects = await interactions.clockify.getProjects(workspace.id);
-        if (!projects.length) {
-          return [];
-        }
-
         const timeEntries = await interactions.clockify.getTimeEntries(workspace.id, user.id, range.start, range.end);
         if (!timeEntries.length) {
           return [];
