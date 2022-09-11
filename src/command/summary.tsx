@@ -199,7 +199,9 @@ function summaryAll(): CommandHandler<Env> {
                 .map((value) => {
                   const elapsed = formatElapsed(value.durationMS);
                   const price = round(value.price, 2);
-                  return `\`${value.projectName}\` **${value.description ?? "Unlabelled"}** (${elapsed}) - $${price}`;
+                  return `\`${value.clientName.length ? `${value.clientName}: ` : ""}${value.projectName}\` **${
+                    value.description ?? "Unlabelled"
+                  }** (${elapsed}) - $${price}`;
                 })
                 .join("\n")}
               {"\n"}
