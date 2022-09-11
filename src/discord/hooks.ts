@@ -1,4 +1,4 @@
-import { useString } from "slshx";
+import { useString } from "@zerite/slshx";
 import { UserInteractions } from "../api/kv";
 import { Project, User, Workspace } from "../api/types/clockify";
 import { timeRanges } from "../api/times";

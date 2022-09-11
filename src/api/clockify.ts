@@ -1,23 +1,18 @@
 import { UserInteractions } from "./kv";
 import { PayRate, Project, TimeEntry, User, Workspace } from "./types/clockify";
+import { BotError, BotErrorCode } from "../discord/error";
 
 const uuidRegex = new RegExp(
   "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
   "i",
 );
 
-export class ClockifyError extends Error {
-  constructor(message: string, public status: number) {
-    super(message);
-  }
-}
-
 export class ClockifyAPI {
   private static readonly BASE_URL = "https://api.clockify.me/api/v1";
 
   constructor(private readonly interactions: UserInteractions) {}
 
-  validateApiKey(apiKey: string): boolean {
+  validateApiKey(apiKey: string) {
     // Decode the key as base64
     let uuid;
 
@@ -28,7 +23,9 @@ export class ClockifyAPI {
     }
 
     // Check if the decoded key is a valid UUID
-    return uuidRegex.test(uuid);
+    if (!uuidRegex.test(uuid)) {
+      throw new BotError(BotErrorCode.InvalidApiKey);
+    }
   }
 
   getHourlyRate(workspace: Workspace, user: User): PayRate {
@@ -67,27 +64,28 @@ export class ClockifyAPI {
     );
   }
 
-  async getWorkspaceById(id: string): Promise<Workspace | undefined> {
+  async getWorkspaceById(id: string): Promise<Workspace> {
     const workspaces = await this.getWorkspaces();
-    return workspaces.find((w) => w.id === id);
+    const workspace = workspaces.find((w) => w.id === id);
+    if (!workspace) throw new BotError(BotErrorCode.WorkspaceNotFound);
+    return workspace;
   }
 
   getProjectById(workspaceId: string, projectId: string): Promise<Project> {
     return this.get(`/workspaces/${workspaceId}/projects/${projectId}`);
   }
 
-  async getUserById(
-    workspaceId: string,
-    userId: string,
-  ): Promise<User | undefined> {
+  async getUserById(workspaceId: string, userId: string): Promise<User> {
     const users = await this.getUsers(workspaceId);
-    return users.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
+    if (!user) throw new BotError(BotErrorCode.UserNotFound);
+    return user;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get(path: string): Promise<any> {
     const apiKey = await this.interactions.getApiKey();
-    if (!apiKey) throw new ClockifyError("No API key set", 400);
+    if (!apiKey) throw new BotError(BotErrorCode.ApiKeyNotSet);
 
     const cacheId = `${path.includes("?") ? "&" : "?"}cache_id=${
       this.interactions.user.id
@@ -107,12 +105,9 @@ export class ClockifyAPI {
       },
     });
 
-    if (response.status === 401)
-      throw new ClockifyError("API key is not set or invalid.", 401);
-    if (response.status === 403)
-      throw new ClockifyError("API key is not valid.", 403);
-    if (response.status !== 200)
-      throw new ClockifyError("Unknown error.", response.status);
+    if (response.status === 401 || response.status === 403)
+      throw new BotError(BotErrorCode.InvalidApiKey);
+    if (response.status !== 200) throw new BotError(BotErrorCode.UnknownError);
 
     return response.json();
   }

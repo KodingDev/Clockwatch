@@ -9,6 +9,7 @@ export class UserInteractions {
   }
 
   public async setApiKey(apiKey: string) {
+    this.clockify.validateApiKey(apiKey);
     await this.kv.put(this.getKey("api_key"), apiKey);
   }
 

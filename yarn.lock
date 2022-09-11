@@ -340,6 +340,13 @@
     "@typescript-eslint/types" "5.36.2"
     eslint-visitor-keys "^3.3.0"
 
+"@zerite/slshx@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@zerite/slshx/-/slshx-0.3.1.tgz#69b5a7aedbf3ce9c25a6f262a259b26068cdd680"
+  integrity sha512-HsMfBxchnS2oULbLC1nHEThdN1SxrRu3uiDUY9YxF4KyDHtoah3WQUFEV2oChovwtiyJCWpzFmSG+onRImWIKA==
+  dependencies:
+    discord-api-types "0.27.0"
+
 acorn-jsx@^5.3.2:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.3.2.tgz#7ed5bb55908b3b2f1bc55c6af1653bada7f07937"
@@ -515,10 +522,10 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-discord-api-types@^0.27.0:
-  version "0.27.3"
-  resolved "https://registry.yarnpkg.com/discord-api-types/-/discord-api-types-0.27.3.tgz#518e99a548b62a7912a09e94ad90d0612e2053c6"
-  integrity sha512-HOG64DTpZ7CB5EU9eKbjHD50H5qG1pxKG8pmFfHUMKjKvEWeLBHfw0c9xF1cruiYLnBb3+n7m3jBWxZ3H1hcgQ==
+discord-api-types@0.27.0:
+  version "0.27.0"
+  resolved "https://registry.yarnpkg.com/discord-api-types/-/discord-api-types-0.27.0.tgz#4378e2f778fc974a315f1ae703fca149e4d0e615"
+  integrity sha512-l7AnQKffohJTembJRN4Bz54R/esSn+WmulWE7bDIHVcuCLdsUhlvt+4tns8ox+wsEPVlT+gEEko2BF5AL8/zjw==
 
 doctrine@^3.0.0:
   version "3.0.0"
@@ -1473,13 +1480,6 @@ slash@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/slash/-/slash-3.0.0.tgz#6539be870c165adbd5240220dbe361f1bc4d4634"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
-
-slshx@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/slshx/-/slshx-0.3.0.tgz#9f312f66ec47cf18cf52106666362a885990d387"
-  integrity sha512-GSPdI/tQmDvoHgJpn3GlFJgUEleTJo5gen54oEfmVu1o/+DaWw3N8MkrH+z7fAZT9p+xi8mby8XZhJ11e8Oquw==
-  dependencies:
-    discord-api-types "^0.27.0"
 
 source-map-support@^0.5.20:
   version "0.5.21"

@@ -1,4 +1,4 @@
-import { CommandHandler, createElement, useDescription } from "slshx";
+import { CommandHandler, createElement, useDescription } from "@zerite/slshx";
 import { InfoMessage } from "../discord/messages";
 
 export function invite(): CommandHandler<Env> {

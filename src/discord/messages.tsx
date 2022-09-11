@@ -5,7 +5,7 @@ import {
   Embed,
   EmbedProps,
   Message,
-} from "slshx";
+} from "@zerite/slshx";
 import { APIEmbedField } from "discord-api-types/v9";
 
 const AUTHOR_IMAGE =
