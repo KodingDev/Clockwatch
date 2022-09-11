@@ -20,6 +20,7 @@ export interface PayRate {
 export interface Workspace {
   id: string;
   name: string;
+  hourlyRate: PayRate;
   memberships: Membership[];
 }
 

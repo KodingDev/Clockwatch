@@ -63,7 +63,9 @@ function summaryProject(): CommandHandler<Env> {
         range.end,
       );
 
-      const rate = interactions.clockify.getHourlyRate(workspace, user);
+      let rate = interactions.clockify.getHourlyRate(workspace, user);
+      if (rate.amount === 0) rate = project.hourlyRate;
+
       const summary = getProjectSummary(timeEntries, project, rate);
 
       if (!summary.length) {

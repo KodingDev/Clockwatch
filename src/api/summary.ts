@@ -60,7 +60,12 @@ export const getWorkspaceSummary = (
         throw new Error("Project not found");
       }
 
-      const projectSummary = getProjectSummary(entries, project, rate);
+      const projectSummary = getProjectSummary(
+        entries,
+        project,
+        rate.amount === 0 ? project.hourlyRate : rate,
+      );
+
       return projectSummary.map((s) => ({
         ...s,
         workspaceName: workspace.name,

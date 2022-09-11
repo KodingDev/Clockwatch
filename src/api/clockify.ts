@@ -34,7 +34,7 @@ export class ClockifyAPI {
   getHourlyRate(workspace: Workspace, user: User): PayRate {
     return (
       workspace.memberships.find((value) => value.userId === user.id)
-        ?.hourlyRate ?? { amount: 0, currency: "USD" }
+        ?.hourlyRate ?? workspace.hourlyRate
     );
   }
 
