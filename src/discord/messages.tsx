@@ -1,12 +1,4 @@
-import {
-  $field,
-  Child,
-  createElement,
-  Embed,
-  EmbedProps,
-  Message,
-} from "@zerite/slshx";
-import { APIEmbedField } from "discord-api-types/v9";
+import { createElement, Embed, EmbedProps, Message } from "@zerite/slshx";
 
 const AUTHOR_IMAGE =
   "https://cdn.discordapp.com/avatars/1017030181078183966/b94814966373747feac0f6fe29167402.png?size=64";
@@ -17,16 +9,8 @@ export enum ResponseType {
   Info = 0x42a5f5,
 }
 
-type EmbedChild = (
-  | Child
-  | (APIEmbedField & {
-      [$field]: true;
-    })
-)[];
-
 export const ResponseMessage = (
   props: {
-    children?: EmbedChild;
     type: ResponseType | null;
     ephemeral?: boolean;
   } & EmbedProps,
@@ -49,34 +33,23 @@ export const ResponseMessage = (
   </Message>
 );
 
-export const ErrorMessage = (
-  props: {
-    children?: EmbedChild;
-    ephemeral?: boolean;
-  } & EmbedProps,
-) => (
+type ResponseMessageProps = {
+  ephemeral?: boolean;
+} & EmbedProps;
+
+export const ErrorMessage = (props: ResponseMessageProps) => (
   <ResponseMessage {...props} author="Error" type={ResponseType.Error}>
     {props.children}
   </ResponseMessage>
 );
 
-export const SuccessMessage = (
-  props: {
-    children?: EmbedChild;
-    ephemeral?: boolean;
-  } & EmbedProps,
-) => (
+export const SuccessMessage = (props: ResponseMessageProps) => (
   <ResponseMessage ephemeral={false} {...props} type={ResponseType.Success}>
     {props.children}
   </ResponseMessage>
 );
 
-export const InfoMessage = (
-  props: {
-    children?: EmbedChild;
-    ephemeral?: boolean;
-  } & EmbedProps,
-) => (
+export const InfoMessage = (props: ResponseMessageProps) => (
   <ResponseMessage {...props} type={ResponseType.Info}>
     {props.children}
   </ResponseMessage>
