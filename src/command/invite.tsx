@@ -1,5 +1,5 @@
 import { CommandHandler, createElement, useDescription } from "@zerite/slshx";
-import { InfoMessage } from "../discord/messages";
+import { InfoMessage } from "@/discord";
 
 export function invite(): CommandHandler<Env> {
   useDescription("Invite the bot to your server");

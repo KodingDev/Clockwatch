@@ -4,9 +4,9 @@ import {
   Field,
   useDescription,
 } from "@zerite/slshx";
-import { UserInteractions } from "../api/kv";
-import { getInteractionUser } from "../util/discord";
-import { SuccessMessage } from "../discord/messages";
+import { UserInteractions } from "@/clockify";
+import { getInteractionUser } from "@/util";
+import { SuccessMessage } from "@/discord";
 
 export function user(): CommandHandler<Env> {
   useDescription("Fetch your user information.");

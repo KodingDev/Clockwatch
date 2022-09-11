@@ -1,5 +1,5 @@
 import { APIChatInputApplicationCommandInteraction } from "discord-api-types";
-import { BotError, BotErrorCode } from "../discord/error";
+import { BotError, BotErrorCode } from "@/discord";
 
 export const getInteractionUser = (
   interaction: APIChatInputApplicationCommandInteraction,

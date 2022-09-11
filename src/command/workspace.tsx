@@ -4,10 +4,9 @@ import {
   Field,
   useDescription,
 } from "@zerite/slshx";
-import { UserInteractions } from "../api/kv";
-import { SuccessMessage } from "../discord/messages";
-import { useWorkspace } from "../discord/hooks";
-import { getInteractionUser } from "../util/discord";
+import { UserInteractions } from "@/clockify";
+import { SuccessMessage, useWorkspace } from "@/discord";
+import { getInteractionUser } from "@/util";
 
 function info(): CommandHandler<Env> {
   useDescription("Fetch information on a specific workspace.");

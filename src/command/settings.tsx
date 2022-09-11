@@ -4,9 +4,9 @@ import {
   useDescription,
   useString,
 } from "@zerite/slshx";
-import { UserInteractions } from "../api/kv";
-import { InfoMessage } from "../discord/messages";
-import { getInteractionUser } from "../util/discord";
+import { UserInteractions } from "@/clockify";
+import { InfoMessage } from "@/discord";
+import { getInteractionUser } from "@/util";
 
 function setApiKey(): CommandHandler<Env> {
   useDescription("Sets your Clockify API key.");

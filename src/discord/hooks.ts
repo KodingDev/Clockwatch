@@ -1,7 +1,11 @@
 import { useString } from "@zerite/slshx";
-import { UserInteractions } from "../api/kv";
-import { Project, User, Workspace } from "../api/types/clockify";
-import { timeRanges } from "../api/times";
+import {
+  Project,
+  timeRanges,
+  User,
+  UserInteractions,
+  Workspace,
+} from "@/clockify";
 
 export const useWorkspace = (name: string, description: string) => {
   const tmp: string = useString(name, description, {

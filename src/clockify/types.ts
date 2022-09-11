@@ -48,3 +48,15 @@ export interface TimeInterval {
   start: string;
   end?: string;
 }
+
+/**
+ * Start custom types
+ */
+export interface ReportData {
+  workspaceName: string;
+  projectName: string;
+  clientName: string;
+  description: string;
+  price: number;
+  durationMS: number;
+}

@@ -1,8 +1,8 @@
-import { UserInteractions } from "./kv";
-import { PayRate, Project, TimeEntry, User, Workspace } from "./types/clockify";
-import { BotError, BotErrorCode } from "../discord/error";
+import { UserInteractions } from "./interactions";
+import { PayRate, Project, TimeEntry, User, Workspace } from "./types";
+import { BotError, BotErrorCode } from "@/discord";
 
-const uuidRegex = new RegExp(
+const UUID_REGEX = new RegExp(
   "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
   "i",
 );
@@ -23,7 +23,7 @@ export class ClockifyAPI {
     }
 
     // Check if the decoded key is a valid UUID
-    if (!uuidRegex.test(uuid)) {
+    if (!UUID_REGEX.test(uuid)) {
       throw new BotError(BotErrorCode.InvalidApiKey);
     }
   }

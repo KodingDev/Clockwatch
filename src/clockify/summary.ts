@@ -1,12 +1,12 @@
+import _ from "lodash";
 import {
   PayRate,
   Project,
+  ReportData,
   TimeEntry,
   TimeInterval,
   Workspace,
-} from "./types/clockify";
-import { ReportData } from "./types/summary";
-import _ from "lodash";
+} from "./types";
 
 const getDuration = (timeInterval: TimeInterval): number => {
   const start = new Date(timeInterval.start);

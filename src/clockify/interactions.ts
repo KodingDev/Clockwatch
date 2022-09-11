@@ -1,5 +1,5 @@
 import { APIUser } from "discord-api-types/v9";
-import { ClockifyAPI } from "./clockify";
+import { ClockifyAPI } from "./api";
 
 export class UserInteractions {
   readonly clockify: ClockifyAPI;
