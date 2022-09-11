@@ -1,4 +1,4 @@
-import { CommandHandler, createElement, useDescription, useString } from "@zerite/slshx";
+import { CommandHandler, createElement, useDescription, useNumber, useString } from "@zerite/slshx";
 import { UserInteractions } from "@/clockify";
 import { InfoMessage } from "@/discord";
 import { getInteractionUser } from "@/util";
@@ -18,6 +18,24 @@ function setApiKey(): CommandHandler<Env> {
   };
 }
 
+function setDefaultRate(): CommandHandler<Env> {
+  useDescription("Sets your default hourly rate when a workspace doesn't specify one.");
+
+  const rate = useNumber("rate", "Your default hourly rate", {
+    required: true,
+    min: 0,
+    max: 1000,
+  });
+
+  return async (interaction, env) => {
+    const user = getInteractionUser(interaction);
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, user);
+    await interactions.setDefaultRate(rate);
+    return <InfoMessage>Default rate set.</InfoMessage>;
+  };
+}
+
 export const settings = {
   setapikey: setApiKey,
+  setdefaultrate: setDefaultRate,
 };

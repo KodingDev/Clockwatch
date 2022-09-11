@@ -36,8 +36,9 @@ export class ClockifyAPI {
    * @param workspace The workspace to get the rate for
    * @param user The user to get the rate for
    */
-  getHourlyRate(workspace: Workspace, user: User): PayRate {
-    return workspace.memberships.find((value) => value.userId === user.id)?.hourlyRate ?? workspace.hourlyRate;
+  getHourlyRate(workspace: Workspace, user: User): PayRate | undefined {
+    const workspaceRate = workspace.hourlyRate.amount === 0 ? undefined : workspace.hourlyRate;
+    return workspace.memberships.find((value) => value.userId === user.id)?.hourlyRate ?? workspaceRate;
   }
 
   /**

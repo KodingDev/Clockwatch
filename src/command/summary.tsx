@@ -34,8 +34,10 @@ function summaryProject(): CommandHandler<Env> {
     const range = timeRange.get();
     const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
 
-    let rate = interactions.clockify.getHourlyRate(workspace, user);
-    if (rate.amount === 0) rate = project.hourlyRate;
+    const rate =
+      interactions.clockify.getHourlyRate(workspace, user) ||
+      project.hourlyRate ||
+      (await interactions.getDefaultRateObject());
 
     const summary = getProjectSummary(timeEntries, project, rate);
     if (!summary.length) {
@@ -91,7 +93,7 @@ function summaryWorkspace(): CommandHandler<Env> {
     const range = timeRange.get();
     const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
 
-    const rate = interactions.clockify.getHourlyRate(workspace, user);
+    const rate = interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
     const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
 
     if (!summary.length) {
@@ -157,7 +159,9 @@ function summaryAll(): CommandHandler<Env> {
           return [];
         }
 
-        const rate = interactions.clockify.getHourlyRate(workspace, user);
+        const rate =
+          interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
+
         return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, rate))
           .filter((value) => value.price > 0)
           .sortBy((value) => -value.durationMS)
