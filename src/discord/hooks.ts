@@ -1,6 +1,7 @@
 import { useString } from "slshx";
 import { UserInteractions } from "../api/kv";
 import { Project, User, Workspace } from "../api/types/clockify";
+import { timeRanges } from "../api/times";
 
 export const useWorkspace = (name: string, description: string) => {
   const tmp: string = useString(name, description, {
@@ -134,4 +135,17 @@ export const useUserOptional = (
     },
   });
   return tmp;
+};
+
+export const useTimeRangeOptional = (name: string, description: string) => {
+  const tmp: string | null = useString(name, description, {
+    required: false,
+    autocomplete: () =>
+      timeRanges
+        .filter((value) =>
+          value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""),
+        )
+        .map((value) => ({ name: value.name, value: value.name })),
+  });
+  return timeRanges.find((value) => value.name === tmp) ?? timeRanges[0];
 };

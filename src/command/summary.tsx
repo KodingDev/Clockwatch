@@ -2,7 +2,12 @@ import { CommandHandler, createElement, Field, useDescription } from "slshx";
 import { UserInteractions } from "../api/kv";
 import { ErrorMessage, SuccessMessage } from "../discord/messages";
 import { wrapClockifyBlock } from "../discord/clockify";
-import { useProject, useUserOptional, useWorkspace } from "../discord/hooks";
+import {
+  useProject,
+  useTimeRangeOptional,
+  useUserOptional,
+  useWorkspace,
+} from "../discord/hooks";
 import { getProjectSummary, getWorkspaceSummary } from "../api/summary";
 import { formatElapsed } from "../util/date";
 import _, { round } from "lodash";
@@ -16,6 +21,7 @@ function summaryProject(): CommandHandler<Env> {
   const workspaceId = useWorkspace("workspace", "The workspace to fetch.");
   const projectId = useProject("project", "The project to fetch.", workspaceId);
   const userId = useUserOptional("user", "The user to fetch.", workspaceId);
+  const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
 
   return async function* (interaction, env) {
     const user = interaction.member?.user ?? interaction.user;
@@ -49,11 +55,12 @@ function summaryProject(): CommandHandler<Env> {
         return <ErrorMessage>Project not found.</ErrorMessage>;
       }
 
+      const range = timeRange.get();
       const timeEntries = await interactions.clockify.getTimeEntries(
         workspaceId,
         user.id,
-        new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-        new Date(),
+        range.start,
+        range.end,
       );
 
       const rate = interactions.clockify.getHourlyRate(workspace, user);
@@ -73,7 +80,7 @@ function summaryProject(): CommandHandler<Env> {
             totalElapsed,
           )}`}
         >
-          Showing time entries for the last 7 days for `{user.name}`.
+          Showing time entries for {timeRange.sentenceName} for {user.name}.
           <Field name="Time Entries">
             {summary
               .sort((a, b) => b.durationMS - a.durationMS)
@@ -95,6 +102,7 @@ function summaryWorkspace(): CommandHandler<Env> {
 
   const workspaceId = useWorkspace("workspace", "The workspace to fetch.");
   const userId = useUserOptional("user", "The user to fetch.", workspaceId);
+  const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
 
   return async function* (interaction, env) {
     const user = interaction.member?.user ?? interaction.user;
@@ -125,12 +133,12 @@ function summaryWorkspace(): CommandHandler<Env> {
         return <ErrorMessage>No projects found.</ErrorMessage>;
       }
 
-      // TODO: Custom time range
+      const range = timeRange.get();
       const timeEntries = await interactions.clockify.getTimeEntries(
         workspaceId,
         user.id,
-        new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-        new Date(),
+        range.start,
+        range.end,
       );
 
       const rate = interactions.clockify.getHourlyRate(workspace, user);
@@ -156,7 +164,7 @@ function summaryWorkspace(): CommandHandler<Env> {
             totalElapsed,
           )}`}
         >
-          Showing time entries for the last 7 days for `{user.name}`.
+          Showing time entries for {timeRange.sentenceName} for `{user.name}`.
           {Object.entries(projectSummary).map(
             ([projectName, projectSummary]) => (
               <Field name={projectName}>
@@ -180,6 +188,8 @@ function summaryWorkspace(): CommandHandler<Env> {
 function summaryAll(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for all workspaces.");
 
+  const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+
   return async function* (interaction, env) {
     const user = interaction.member?.user ?? interaction.user;
     if (!user) {
@@ -200,6 +210,7 @@ function summaryAll(): CommandHandler<Env> {
         return <ErrorMessage>User not found.</ErrorMessage>;
       }
 
+      const range = timeRange.get();
       const summaryPromises = await Promise.all(
         workspaces.map(async (workspace) => {
           const projects = await interactions.clockify.getProjects(
@@ -212,8 +223,8 @@ function summaryAll(): CommandHandler<Env> {
           const timeEntries = await interactions.clockify.getTimeEntries(
             workspace.id,
             user.id,
-            new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-            new Date(),
+            range.start,
+            range.end,
           );
           if (!timeEntries.length) {
             return [];
@@ -247,7 +258,7 @@ function summaryAll(): CommandHandler<Env> {
             totalElapsed,
           )}`}
         >
-          Showing time entries for the last 7 days.
+          Showing time entries for {timeRange.sentenceName}.
           {Object.entries(
             _.groupBy(summary, (value) => value.workspaceName),
           ).map(([workspaceName, workspaceSummary]) => (
