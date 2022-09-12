@@ -66,7 +66,6 @@ export const timeRanges: TimeRangeDefinition[] = [
       end.setHours(23, 59, 59, 999);
       end.setDate(start.getDate() + 6);
 
-      console.log(start, end);
       return { start, end };
     },
     progress: defaultProgressFunction,
