@@ -16,7 +16,7 @@ const ErrorMessages: Record<BotErrorCode, string> = {
   // Clockify
   [BotErrorCode.InvalidApiKey]: "Invalid API key. Please check your API key is correct and try again.",
   [BotErrorCode.ApiKeyNotSet]:
-    "You have not set an API key. Please set one using </settings setapikey:1017089178955153559> and re-run the command.",
+    "You have not set an API key. Please set one using </settings setapikey:1017089178955153559> and re-run the command. You can find your API key [here](https://app.clockify.me/user/settings) at the bottom of the page.",
   [BotErrorCode.WorkspaceNotFound]: "Workspace not found.",
   [BotErrorCode.UserNotFound]: "User not found.",
 
