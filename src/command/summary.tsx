@@ -7,7 +7,7 @@ import {
   useUserOptional,
   useWorkspace,
 } from "@/discord";
-import { estimateTotal, getProjectSummary, getWorkspaceSummary, UserInteractions } from "@/clockify";
+import { estimateTotal, getProjectSummary, getWorkspaceSummary, ReportData, UserInteractions } from "@/clockify";
 import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
 
@@ -129,6 +129,99 @@ function summaryWorkspace(): CommandHandler<Env> {
   };
 }
 
+function summaryWorkspaceUsers(): CommandHandler<Env> {
+  useDescription("Fetch clocked time summary across all users");
+
+  const workspaceId = useWorkspace("workspace", "The workspace to fetch.");
+  const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+
+  return async function* (interaction, env) {
+    yield;
+
+    const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
+
+    const workspace = await interactions.clockify.getWorkspaceById(workspaceId);
+    const projects = await interactions.clockify.getProjects(workspaceId);
+    const range = timeRange.get();
+
+    const summaries = _.flatten(
+      await Promise.all(
+        workspace.memberships.map(async (membership) => {
+          if (membership.membershipType !== "WORKSPACE") return [];
+
+          const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
+          const rate = interactions.clockify.getHourlyRate(workspace, user);
+          if (!rate) return [];
+
+          const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
+          const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
+          return summary.map((value) => ({ ...value, userName: user.name } as ReportData));
+        }),
+      ),
+    );
+
+    if (!summaries.length) {
+      return <ErrorMessage>No time entries found.</ErrorMessage>;
+    }
+
+    const userSummary = _.chain(summaries)
+      .groupBy((value) => value.userName)
+      .sortBy((value) => -value.reduce((a, b) => a + b.durationMS, 0))
+      .value();
+
+    const totalMoney = summaries.reduce((a, b) => a + b.price, 0);
+    const totalElapsed = summaries.reduce((a, b) => a + b.durationMS, 0);
+    const estimatedTotal = estimateTotal(summaries, timeRange);
+
+    return (
+      <SuccessMessage
+        author={`Workspace User Summary • ${workspace.name}`}
+        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
+      >
+        Showing time entries for {timeRange.sentenceName} across all workspace users.
+        {estimatedTotal ? ` The projected total is $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
+        {userSummary.map((userSummary) => {
+          const sorted = _.chain(userSummary)
+            .sortBy((value) => -value.durationMS)
+            .value();
+
+          const display = sorted.slice(0, 3);
+          const remaining = sorted.length - display.length;
+          const remainingTotal = display.reduce((a, b) => a + b.price, 0);
+
+          const remainingElapsed = display.reduce((a, b) => a + b.durationMS, 0);
+          const totalElapsed = sorted.reduce((a, b) => a + b.durationMS, 0);
+
+          return (
+            <Field name={userSummary[0].userName ?? "User"}>
+              {display
+                .map((value) => {
+                  const elapsed = formatElapsed(value.durationMS);
+                  const price = round(value.price, 2);
+                  return `\`${value.clientName.length ? `${value.clientName}: ` : ""}${value.projectName}\` **${
+                    value.description ?? "Unlabelled"
+                  }** (${elapsed}): $${price}`;
+                })
+                .join("\n")}
+              {"\n"}
+              {remaining > 0 &&
+                `*...and ${remaining} more projects for $${round(remainingTotal, 2)} (${formatElapsed(
+                  remainingElapsed,
+                )})*\n`}
+              {"\n"}**Total**: $
+              {round(
+                userSummary.reduce((a, b) => a + b.price, 0),
+                2,
+              )}{" "}
+              • {formatElapsed(totalElapsed)}
+            </Field>
+          );
+        })}
+      </SuccessMessage>
+    );
+  };
+}
+
 function summaryAll(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for all workspaces.");
 
@@ -186,11 +279,11 @@ function summaryAll(): CommandHandler<Env> {
             .sortBy((value) => -value.durationMS)
             .value();
 
-          const display = sortedProjects.slice(0, 5);
+          const display = sortedProjects.slice(0, 3);
           const remaining = sortedProjects.length - display.length;
-          const remainingTotal = sortedProjects.slice(5).reduce((a, b) => a + b.price, 0);
+          const remainingTotal = display.reduce((a, b) => a + b.price, 0);
 
-          const remainingElapsed = sortedProjects.slice(5).reduce((a, b) => a + b.durationMS, 0);
+          const remainingElapsed = display.reduce((a, b) => a + b.durationMS, 0);
           const totalElapsed = sortedProjects.reduce((a, b) => a + b.durationMS, 0);
 
           return (
@@ -201,7 +294,7 @@ function summaryAll(): CommandHandler<Env> {
                   const price = round(value.price, 2);
                   return `\`${value.clientName.length ? `${value.clientName}: ` : ""}${value.projectName}\` **${
                     value.description ?? "Unlabelled"
-                  }** (${elapsed}) - $${price}`;
+                  }** (${elapsed}): $${price}`;
                 })
                 .join("\n")}
               {"\n"}
@@ -226,5 +319,6 @@ function summaryAll(): CommandHandler<Env> {
 export const summary = {
   project: summaryProject,
   workspace: summaryWorkspace,
+  workspaceusers: summaryWorkspaceUsers,
   all: summaryAll,
 };

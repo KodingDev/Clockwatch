@@ -59,6 +59,7 @@ export interface ReportData {
   workspaceName: string;
   projectName: string;
   clientName: string;
+  userName?: string;
   description?: string;
   price: number;
   durationMS: number;
