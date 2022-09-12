@@ -31,7 +31,7 @@ export interface Project {
   id: string;
   workspaceId: string;
   name: string;
-  hourlyRate: PayRate;
+  hourlyRate?: PayRate;
   billable: boolean;
   clientId?: string;
   clientName: string;

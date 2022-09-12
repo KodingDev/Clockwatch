@@ -30,7 +30,7 @@ export const getProjectSummary = (timeEntries: TimeEntry[], project: Project, ra
       const durationMS = entries.reduce((total, t) => total + getDuration(t.timeInterval), 0);
 
       // Returns a whole number by default, divide by 100 to get a decimal
-      const hourlyRate = (project.hourlyRate.amount || rate.amount) / 100;
+      const hourlyRate = (project.hourlyRate?.amount || rate.amount) / 100;
       return <ReportData>{
         projectName: project.name,
         clientName: project.clientName ?? "",
@@ -74,7 +74,7 @@ export const getWorkspaceSummary = (
       const projectSummary = getProjectSummary(
         entries,
         project,
-        project.hourlyRate.amount === 0 ? rate : project.hourlyRate,
+        project.hourlyRate?.amount === 0 ? rate : project.hourlyRate ?? rate,
       );
 
       // Map the project summary and add the workspace name
