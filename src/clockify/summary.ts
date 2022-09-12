@@ -71,7 +71,11 @@ export const getWorkspaceSummary = (
       }
 
       // Create a summary for the project
-      const projectSummary = getProjectSummary(entries, project, rate.amount === 0 ? project.hourlyRate : rate);
+      const projectSummary = getProjectSummary(
+        entries,
+        project,
+        project.hourlyRate.amount === 0 ? rate : project.hourlyRate,
+      );
 
       // Map the project summary and add the workspace name
       return projectSummary.map((s) => ({

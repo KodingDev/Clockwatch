@@ -150,8 +150,8 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
           if (membership.membershipType !== "WORKSPACE") return [];
 
           const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
-          const rate = interactions.clockify.getHourlyRate(workspace, user);
-          if (!rate) return [];
+          const rate =
+            interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
 
           const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
           const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
