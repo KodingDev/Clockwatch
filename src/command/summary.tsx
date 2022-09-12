@@ -51,18 +51,20 @@ function summaryProject(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Project Summary • ${project.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for {user.name}.
         {estimatedTotal
-          ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName} on this project.`
+          ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${
+              timeRange.sentenceName
+            } on this project.`
           : ""}
         <Field name="Time Entries">
           {summary
             .sort((a, b) => b.durationMS - a.durationMS)
             .map((value) => {
               const elapsed = formatElapsed(value.durationMS);
-              const price = round(value.price, 2);
+              const price = round(value.price, 2).toFixed(2);
               return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
             })
             .join("\n")}
@@ -108,17 +110,19 @@ function summaryWorkspace(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Workspace Summary • ${workspace.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for `{user.name}`.
-        {estimatedTotal ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
+        {estimatedTotal
+          ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
+          : ""}
         {Object.entries(projectSummary).map(([projectName, projectSummary]) => (
           <Field name={projectName}>
             {projectSummary
               .sort((a, b) => b.durationMS - a.durationMS)
               .map((value) => {
                 const elapsed = formatElapsed(value.durationMS);
-                const price = round(value.price, 2);
+                const price = round(value.price, 2).toFixed(2);
                 return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
               })
               .join("\n")}
@@ -176,10 +180,12 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Workspace User Summary • ${workspace.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} across all workspace users.
-        {estimatedTotal ? ` The projected total is $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
+        {estimatedTotal
+          ? ` The projected total is $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
+          : ""}
         {userSummary.map((userSummary) => {
           const sorted = _.chain(userSummary)
             .sortBy((value) => -value.durationMS)
@@ -197,7 +203,7 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
               {display
                 .map((value) => {
                   const elapsed = formatElapsed(value.durationMS);
-                  const price = round(value.price, 2);
+                  const price = round(value.price, 2).toFixed(2);
                   return `\`${value.clientName.length ? `${value.clientName}: ` : ""}${value.projectName}\` **${
                     value.description ?? "Unlabelled"
                   }** (${elapsed}): $${price}`;
@@ -205,14 +211,14 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
                 .join("\n")}
               {"\n"}
               {remaining > 0 &&
-                `*...and ${remaining} more projects for $${round(remainingTotal, 2)} (${formatElapsed(
+                `*...and ${remaining} more projects for $${round(remainingTotal, 2).toFixed(2)} (${formatElapsed(
                   remainingElapsed,
                 )})*\n`}
               {"\n"}**Total**: $
               {round(
                 userSummary.reduce((a, b) => a + b.price, 0),
                 2,
-              )}{" "}
+              ).toFixed(2)}{" "}
               • {formatElapsed(totalElapsed)}
             </Field>
           );
@@ -270,10 +276,12 @@ function summaryAll(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Summary • ${user.name}`}
-        footer={`Total: $${round(totalMoney, 2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName}.
-        {estimatedTotal ? ` They are projected to earn $${round(estimatedTotal, 2)} ${timeRange.sentenceName}.` : ""}
+        {estimatedTotal
+          ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
+          : ""}
         {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => {
           const sortedProjects = _.chain(workspaceSummary)
             .sortBy((value) => -value.durationMS)
@@ -291,7 +299,7 @@ function summaryAll(): CommandHandler<Env> {
               {display
                 .map((value) => {
                   const elapsed = formatElapsed(value.durationMS);
-                  const price = round(value.price, 2);
+                  const price = round(value.price, 2).toFixed(2);
                   return `\`${value.clientName.length ? `${value.clientName}: ` : ""}${value.projectName}\` **${
                     value.description ?? "Unlabelled"
                   }** (${elapsed}): $${price}`;
@@ -299,14 +307,14 @@ function summaryAll(): CommandHandler<Env> {
                 .join("\n")}
               {"\n"}
               {remaining > 0 &&
-                `*...and ${remaining} more projects for $${round(remainingTotal, 2)} (${formatElapsed(
+                `*...and ${remaining} more projects for $${round(remainingTotal, 2).toFixed(2)} (${formatElapsed(
                   remainingElapsed,
                 )})*\n`}
               {"\n"}**Total**: $
               {round(
                 workspaceSummary.reduce((a, b) => a + b.price, 0),
                 2,
-              )}{" "}
+              ).toFixed(2)}{" "}
               • {formatElapsed(totalElapsed)}
             </Field>
           );
