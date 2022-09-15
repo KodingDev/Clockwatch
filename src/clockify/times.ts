@@ -143,4 +143,21 @@ export const timeRanges: TimeRangeDefinition[] = [
       return { start, end };
     },
   },
+  {
+    name: "Previous Month",
+    sentenceName: "the previous month",
+    get: () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      start.setMonth(start.getMonth() - 1);
+      start.setDate(1);
+
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      end.setMonth(end.getMonth());
+      end.setDate(0);
+
+      return { start, end };
+    },
+  },
 ];
