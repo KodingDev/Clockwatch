@@ -1,6 +1,7 @@
 import { createElement, createHandler, ErrorHandler } from "@zerite/slshx";
 import { invite, settings, summary, user, workspace } from "@/command";
-import { BotError, ErrorMessage } from "@/discord";
+import { BotError } from "@/discord";
+import { ErrorMessage } from "@/discord/components";
 
 const errorHandler: ErrorHandler = (error) => {
   if (error instanceof BotError) {

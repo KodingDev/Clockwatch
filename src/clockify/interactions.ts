@@ -1,6 +1,6 @@
 import { APIUser } from "discord-api-types/v9";
 import { ClockifyAPI } from "./api";
-import { PayRate } from "@/clockify/types";
+import { PayRate, User, Workspace } from "@/clockify/types";
 import { round } from "lodash";
 
 /**
@@ -63,6 +63,17 @@ export class UserInteractions {
       amount: Math.round((await this.getDefaultRate()) * 100),
       currency: "USD",
     };
+  }
+
+  public async getHourlyRate(workspace: Workspace, user: User): Promise<PayRate> {
+    const hourlyRate = await this.clockify.getHourlyRate(workspace, user);
+    if (hourlyRate) return hourlyRate;
+
+    return await this.getDefaultRateObject();
+  }
+
+  public async getUserOrSelf(workspaceId: string, userId?: string | null): Promise<User> {
+    return userId ? await this.clockify.getUserById(workspaceId, userId) : await this.clockify.getUser();
   }
 
   private getKey(entry: string): string {

@@ -1,15 +1,17 @@
 import { CommandHandler, createElement, Field, useDescription } from "@zerite/slshx";
+import { BotError, BotErrorCode, useProject, useTimeRangeOptional, useUserOptional, useWorkspace } from "@/discord";
 import {
-  ErrorMessage,
-  SuccessMessage,
-  useProject,
-  useTimeRangeOptional,
-  useUserOptional,
-  useWorkspace,
-} from "@/discord";
-import { estimateTotal, getProjectSummary, getWorkspaceSummary, ReportData, UserInteractions } from "@/clockify";
+  estimateTotal,
+  getProjectSummary,
+  getSummaryTotals,
+  getWorkspaceSummary,
+  ReportData,
+  UserInteractions,
+} from "@/clockify";
 import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
+import { ReportDataSummaryField } from "@/discord/components/summary";
+import { SuccessMessage } from "@/discord/components";
 
 function summaryProject(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for a specific project.");
@@ -25,27 +27,15 @@ function summaryProject(): CommandHandler<Env> {
     const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
 
     const workspace = await interactions.clockify.getWorkspaceById(workspaceId);
-    const user = userId
-      ? await interactions.clockify.getUserById(workspaceId, userId)
-      : await interactions.clockify.getUser();
-
+    const user = await interactions.getUserOrSelf(workspaceId, userId);
     const project = await interactions.clockify.getProjectById(workspaceId, projectId);
+    const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
-    const range = timeRange.get();
-    const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
-
-    const rate =
-      interactions.clockify.getHourlyRate(workspace, user) ||
-      project.hourlyRate ||
-      (await interactions.getDefaultRateObject());
-
+    const rate = project.hourlyRate ?? (await interactions.getHourlyRate(workspace, user));
     const summary = getProjectSummary(timeEntries, project, rate);
-    if (!summary.length) {
-      return <ErrorMessage>No time entries found.</ErrorMessage>;
-    }
+    if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
-    const totalMoney = summary.reduce((a, b) => a + b.price, 0);
-    const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
     const estimatedTotal = estimateTotal(summary, timeRange);
 
     return (
@@ -59,16 +49,12 @@ function summaryProject(): CommandHandler<Env> {
               timeRange.sentenceName
             } on this project.`
           : ""}
-        <Field name="Time Entries">
-          {summary
-            .sort((a, b) => b.durationMS - a.durationMS)
-            .map((value) => {
-              const elapsed = formatElapsed(value.durationMS);
-              const price = round(value.price, 2).toFixed(2);
-              return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
-            })
-            .join("\n")}
-        </Field>
+        <ReportDataSummaryField
+          data={summary}
+          titleProvider={(elapsed, price) =>
+            `Time Entries - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+          }
+        />
       </SuccessMessage>
     );
   };
@@ -87,24 +73,16 @@ function summaryWorkspace(): CommandHandler<Env> {
     const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
 
     const workspace = await interactions.clockify.getWorkspaceById(workspaceId);
-    const user = userId
-      ? await interactions.clockify.getUserById(workspaceId, userId)
-      : await interactions.clockify.getUser();
-
+    const user = await interactions.getUserOrSelf(workspaceId, userId);
     const projects = await interactions.clockify.getProjects(workspaceId);
-    const range = timeRange.get();
-    const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
+    const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
-    const rate = interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
+    const rate = await interactions.getHourlyRate(workspace, user);
     const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
-
-    if (!summary.length) {
-      return <ErrorMessage>No time entries found.</ErrorMessage>;
-    }
+    if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
     const projectSummary = _.groupBy(summary, (value) => value.projectName);
-    const totalMoney = summary.reduce((a, b) => a + b.price, 0);
-    const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
     const estimatedTotal = estimateTotal(summary, timeRange);
 
     return (
@@ -117,16 +95,10 @@ function summaryWorkspace(): CommandHandler<Env> {
           ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
           : ""}
         {Object.entries(projectSummary).map(([projectName, projectSummary]) => (
-          <Field name={projectName}>
-            {projectSummary
-              .sort((a, b) => b.durationMS - a.durationMS)
-              .map((value) => {
-                const elapsed = formatElapsed(value.durationMS);
-                const price = round(value.price, 2).toFixed(2);
-                return `**${value.description ?? "Unlabelled"}** (${elapsed}): $${price}`;
-              })
-              .join("\n")}
-          </Field>
+          <ReportDataSummaryField
+            data={projectSummary}
+            titleProvider={(elapsed, price) => `${projectName} - ${formatElapsed(elapsed)} • $${round(price, 2)}`}
+          />
         ))}
       </SuccessMessage>
     );
@@ -154,27 +126,22 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
           if (membership.membershipType !== "WORKSPACE") return [];
 
           const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
-          const rate =
-            interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
+          const rate = await interactions.getHourlyRate(workspace, user);
 
-          const timeEntries = await interactions.clockify.getTimeEntries(workspaceId, user.id, range.start, range.end);
+          const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, range);
           const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
           return summary.map((value) => ({ ...value, userName: user.name } as ReportData));
         }),
       ),
     );
 
-    if (!summaries.length) {
-      return <ErrorMessage>No time entries found.</ErrorMessage>;
-    }
-
+    if (!summaries.length) throw new BotError(BotErrorCode.NoTimeEntries);
     const userSummary = _.chain(summaries)
       .groupBy((value) => value.userName)
       .sortBy((value) => -value.reduce((a, b) => a + b.durationMS, 0))
       .value();
 
-    const totalMoney = summaries.reduce((a, b) => a + b.price, 0);
-    const totalElapsed = summaries.reduce((a, b) => a + b.durationMS, 0);
+    const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summaries);
     const estimatedTotal = estimateTotal(summaries, timeRange);
 
     return (
@@ -186,43 +153,14 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
         {estimatedTotal
           ? ` The projected total is $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
           : ""}
-        {userSummary.map((userSummary) => {
-          const sorted = _.chain(userSummary)
-            .sortBy((value) => -value.durationMS)
-            .value();
-
-          const display = sorted.slice(0, 3);
-          const remaining = sorted.length - display.length;
-          const remainingTotal = display.reduce((a, b) => a + b.price, 0);
-
-          const remainingElapsed = display.reduce((a, b) => a + b.durationMS, 0);
-          const totalElapsed = sorted.reduce((a, b) => a + b.durationMS, 0);
-          const userTotal = display.reduce((a, b) => a + b.price, 0);
-
-          const fieldName = `${userSummary[0].userName ?? "User"} - $${round(userTotal, 2).toFixed(
-            2,
-          )} • ${formatElapsed(totalElapsed)}`;
-          return (
-            <Field name={fieldName}>
-              {display
-                .map((value) => {
-                  const elapsed = formatElapsed(value.durationMS);
-                  const price = round(value.price, 2).toFixed(2);
-
-                  const prefix = value.clientName.length ? `${value.clientName}: ` : "";
-                  return ` **•** \`${prefix}${value.projectName}\` ${
-                    value.description ?? "Other"
-                  } (${elapsed}): $${price}`;
-                })
-                .join("\n")}
-              {"\n"}
-              {remaining > 0 &&
-                `*...and ${remaining} more projects for $${round(remainingTotal, 2).toFixed(2)} (${formatElapsed(
-                  remainingElapsed,
-                )})*\n`}
-            </Field>
-          );
-        })}
+        {userSummary.map((userSummary) => (
+          <ReportDataSummaryField
+            data={userSummary}
+            titleProvider={(elapsed, price) =>
+              `${userSummary[0].userName ?? "User"} - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+            }
+          />
+        ))}
       </SuccessMessage>
     );
   };
@@ -237,26 +175,17 @@ function summaryAll(): CommandHandler<Env> {
     yield;
 
     const interactions = new UserInteractions(env.CLOCKWATCH_KV, getInteractionUser(interaction));
-
     const workspaces = await interactions.clockify.getWorkspaces();
-    if (!workspaces.length) {
-      return <ErrorMessage>No workspaces found.</ErrorMessage>;
-    }
-
     const user = await interactions.clockify.getUser();
     const range = timeRange.get();
 
     const summaryPromises = await Promise.all(
       workspaces.map(async (workspace) => {
         const projects = await interactions.clockify.getProjects(workspace.id);
-        const timeEntries = await interactions.clockify.getTimeEntries(workspace.id, user.id, range.start, range.end);
-        if (!timeEntries.length) {
-          return [];
-        }
+        const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspace.id, user.id, range);
+        if (!timeEntries.length) return [];
 
-        const rate =
-          interactions.clockify.getHourlyRate(workspace, user) || (await interactions.getDefaultRateObject());
-
+        const rate = await interactions.getHourlyRate(workspace, user);
         return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, rate))
           .filter((value) => value.price > 0)
           .sortBy((value) => -value.durationMS)
@@ -265,12 +194,9 @@ function summaryAll(): CommandHandler<Env> {
     );
 
     const summary = _.flatten(summaryPromises);
-    if (!summary.length) {
-      return <ErrorMessage>No time entries found.</ErrorMessage>;
-    }
+    if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
-    const totalMoney = summary.reduce((a, b) => a + b.price, 0);
-    const totalElapsed = summary.reduce((a, b) => a + b.durationMS, 0);
+    const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
     const estimatedTotal = estimateTotal(summary, timeRange);
 
     const progressDays = Math.ceil((Date.now() - range.start.getTime()) / (1000 * 60 * 60 * 24));
@@ -293,41 +219,14 @@ function summaryAll(): CommandHandler<Env> {
       >
         Showing time entries for {timeRange.sentenceName}.
         <Field name="Summary">{stats.map(([name, value]) => ` **•** \`${name}\`: ${value}`).join("\n")}</Field>
-        {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => {
-          const sortedProjects = _.chain(workspaceSummary)
-            .sortBy((value) => -value.durationMS)
-            .value();
-
-          const display = sortedProjects.slice(0, 3);
-          const remaining = sortedProjects.length - display.length;
-          const remainingTotal = display.reduce((a, b) => a + b.price, 0);
-
-          const remainingElapsed = display.reduce((a, b) => a + b.durationMS, 0);
-          const totalElapsed = sortedProjects.reduce((a, b) => a + b.durationMS, 0);
-          const totalMoney = sortedProjects.reduce((a, b) => a + b.price, 0);
-
-          const fieldName = `${workspaceName} - $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`;
-          return (
-            <Field name={fieldName}>
-              {display
-                .map((value) => {
-                  const elapsed = formatElapsed(value.durationMS);
-                  const price = round(value.price, 2).toFixed(2);
-
-                  const prefix = value.clientName.length ? `${value.clientName}: ` : "";
-                  return ` **•** \`${prefix}${value.projectName}\` ${
-                    value.description ?? "Other"
-                  } (${elapsed}): $${price}`;
-                })
-                .join("\n")}
-              {"\n"}
-              {remaining > 0 &&
-                `*...and ${remaining} more projects for $${round(remainingTotal, 2).toFixed(2)} (${formatElapsed(
-                  remainingElapsed,
-                )})*\n`}
-            </Field>
-          );
-        })}
+        {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => (
+          <ReportDataSummaryField
+            data={workspaceSummary}
+            titleProvider={(elapsed, price) =>
+              `${workspaceName} - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+            }
+          />
+        ))}
       </SuccessMessage>
     );
   };

@@ -4,6 +4,8 @@ export enum BotErrorCode {
   ApiKeyNotSet = "ApiKeyNotSet",
   WorkspaceNotFound = "WorkspaceNotFound",
   UserNotFound = "UserNotFound",
+  NoWorkspacesFound = "NoWorkspacesFound",
+  NoTimeEntries = "NoTimeEntries",
 
   // Discord
   InvalidInteraction = "InvalidInteraction",
@@ -19,6 +21,8 @@ const ErrorMessages: Record<BotErrorCode, string> = {
     "You have not set an API key. Please set one using </settings setapikey:1017089178955153559> and re-run the command. You can find your API key [here](https://app.clockify.me/user/settings) at the bottom of the page.",
   [BotErrorCode.WorkspaceNotFound]: "Workspace not found.",
   [BotErrorCode.UserNotFound]: "User not found.",
+  [BotErrorCode.NoWorkspacesFound]: "You do not have access to any workspaces.",
+  [BotErrorCode.NoTimeEntries]: "No time entries found.",
 
   // Discord
   [BotErrorCode.InvalidInteraction]: "Invalid interaction. Please try again.",

@@ -1,6 +1,7 @@
 import { UserInteractions } from "./interactions";
 import { PayRate, Project, TimeEntry, User, Workspace } from "./types";
 import { BotError, BotErrorCode } from "@/discord";
+import { TimeRange } from "@/clockify/times";
 
 const UUID_REGEX = new RegExp("^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "i");
 
@@ -51,8 +52,10 @@ export class ClockifyAPI {
   /**
    * Returns all workspaces the user has access to.
    */
-  getWorkspaces(): Promise<Workspace[]> {
-    return this.get("/workspaces");
+  async getWorkspaces(): Promise<Workspace[]> {
+    const workspaces: Workspace[] = await this.get("/workspaces");
+    if (!workspaces.length) throw new BotError(BotErrorCode.NoWorkspacesFound);
+    return workspaces;
   }
 
   /**
@@ -77,6 +80,10 @@ export class ClockifyAPI {
     return this.get(
       `/workspaces/${workspaceId}/user/${userId}/time-entries?page-size=5000&start=${start.toISOString()}&end=${end.toISOString()}&project-required=false&task-required=false`,
     );
+  }
+
+  getTimeEntriesFromRange(workspaceId: string, userId: string, range: TimeRange): Promise<TimeEntry[]> {
+    return this.getTimeEntries(workspaceId, userId, range.start, range.end);
   }
 
   /**

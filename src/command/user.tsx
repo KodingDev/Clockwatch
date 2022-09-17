@@ -1,7 +1,7 @@
 import { CommandHandler, createElement, Field, useDescription } from "@zerite/slshx";
 import { UserInteractions } from "@/clockify";
 import { getInteractionUser } from "@/util";
-import { SuccessMessage } from "@/discord";
+import { SuccessMessage } from "@/discord/components";
 
 export function user(): CommandHandler<Env> {
   useDescription("Fetch your user information.");

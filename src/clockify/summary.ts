@@ -125,3 +125,13 @@ export const estimateTotal = (summary: ReportData[], range: TimeRangeDefinition)
   const total = summary.reduce((total, s) => total + s.price, 0);
   return total / progress;
 };
+
+export const getSummaryTotals = (summary: ReportData[]): { money: number; elapsed: number } =>
+  summary.reduce(
+    (totals, s) => {
+      totals.money += s.price;
+      totals.elapsed += s.durationMS;
+      return totals;
+    },
+    { money: 0, elapsed: 0 },
+  );
