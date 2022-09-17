@@ -13,7 +13,6 @@ export const formatElapsed = (milliseconds: number) => {
   if (days > 0) result += `${days}d `;
   if (hours > 0) result += `${hours % 24}h `;
   if (minutes > 0) result += `${minutes % 60}m `;
-  if (seconds > 0) result += `${seconds % 60}s `;
 
   return result.trim();
 };
