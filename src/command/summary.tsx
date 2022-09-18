@@ -203,9 +203,16 @@ function summaryAll(): CommandHandler<Env> {
     const averageHoursPerDay = totalElapsed / progressDays / (1000 * 60 * 60);
     const averageHourlyRate = (totalMoney / totalElapsed) * (1000 * 60 * 60);
 
+    const progress = timeRange.progress ? timeRange.progress(range) : 1;
+    const percentWorked = Math.min(
+      100,
+      (totalElapsed / ((range.end.getTime() - range.start.getTime()) * progress)) * 100,
+    );
+
     const stats = [
       ["Avg. Hours/Day", `${round(averageHoursPerDay, 2).toFixed(2)} hours`],
       ["Avg. Hourly Rate", `$${round(averageHourlyRate, 2).toFixed(2)}/hr`],
+      [`% Worked of ${timeRange.sentenceName}`, `${round(percentWorked, 2)}%`],
     ];
 
     if (estimatedTotal) {
