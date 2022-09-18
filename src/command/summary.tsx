@@ -1,5 +1,13 @@
 import { CommandHandler, createElement, Field, useDescription } from "@zerite/slshx";
-import { BotError, BotErrorCode, useProject, useTimeRangeOptional, useUserOptional, useWorkspace } from "@/discord";
+import {
+  BotError,
+  BotErrorCode,
+  useCurrencyOptional,
+  useProject,
+  useTimeRangeOptional,
+  useUserOptional,
+  useWorkspace,
+} from "@/discord";
 import {
   estimateTotal,
   getProjectSummary,
@@ -170,6 +178,7 @@ function summaryAll(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for all workspaces.");
 
   const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+  const currency = useCurrencyOptional("currency", "The currency to use.");
 
   return async function* (interaction, env) {
     yield;

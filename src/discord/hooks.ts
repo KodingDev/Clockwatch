@@ -1,6 +1,7 @@
 import { useString } from "@zerite/slshx";
 import { Project, timeRanges, User, UserInteractions, Workspace } from "@/clockify";
 import { getInteractionUser } from "@/util";
+import { CURRENCIES, Currency } from "@/api/currency";
 
 /**
  * Wrapper for the useString hook to retrieve a workspace for the user, and
@@ -161,4 +162,22 @@ export const useTimeRangeOptional = (name: string, description: string) => {
         .map((value) => ({ name: value.name, value: value.name })),
   });
   return timeRanges.find((value) => value.name === tmp) ?? timeRanges[0];
+};
+
+/**
+ * Wrapper for the useString hook to retrieve a currency.
+ *
+ * @param name The parameter name
+ * @param description The parameter description
+ */
+export const useCurrencyOptional = (name: string, description: string) => {
+  const tmp: string | null = useString(name, description, {
+    required: false,
+    autocomplete: () =>
+      CURRENCIES.filter((value) => value.toLowerCase().includes(tmp?.toLowerCase() ?? "")).map((value) => ({
+        name: value,
+        value: value,
+      })),
+  });
+  return CURRENCIES.find((value) => value === tmp) ?? Currency.USD;
 };

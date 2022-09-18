@@ -1,7 +1,8 @@
 import { APIUser } from "discord-api-types/v9";
 import { ClockifyAPI } from "./api";
-import { PayRate, User, Workspace } from "@/clockify/types";
+import { CurrencyPair, User, Workspace } from "@/clockify/types";
 import { round } from "lodash";
+import { Currency } from "@/api/currency";
 
 /**
  * Handles mostly KV interactions with Cloudflare and passes
@@ -58,14 +59,14 @@ export class UserInteractions {
   /**
    * Gets the user's default rate in object form.
    */
-  public async getDefaultRateObject(): Promise<PayRate> {
+  public async getDefaultRateObject(): Promise<CurrencyPair> {
     return {
       amount: Math.round((await this.getDefaultRate()) * 100),
-      currency: "USD",
+      currency: Currency.USD,
     };
   }
 
-  public async getHourlyRate(workspace: Workspace, user: User): Promise<PayRate> {
+  public async getHourlyRate(workspace: Workspace, user: User): Promise<CurrencyPair> {
     const hourlyRate = await this.clockify.getHourlyRate(workspace, user);
     if (hourlyRate) return hourlyRate;
 

@@ -1,6 +1,8 @@
 /**
  * Clockify API types
  */
+import { Currency } from "@/api/currency";
+
 export interface User {
   id: string;
   name: string;
@@ -8,22 +10,22 @@ export interface User {
 }
 
 export interface Membership {
-  hourlyRate: PayRate;
-  costRate: PayRate;
+  hourlyRate: CurrencyPair;
+  costRate: CurrencyPair;
   membershipType: "WORKSPACE" | "PROJECT";
   targetId: string;
   userId: string;
 }
 
-export interface PayRate {
+export interface CurrencyPair {
   amount: number;
-  currency: string;
+  currency: Currency;
 }
 
 export interface Workspace {
   id: string;
   name: string;
-  hourlyRate: PayRate;
+  hourlyRate: CurrencyPair;
   memberships: Membership[];
 }
 
@@ -31,7 +33,7 @@ export interface Project {
   id: string;
   workspaceId: string;
   name: string;
-  hourlyRate?: PayRate;
+  hourlyRate?: CurrencyPair;
   billable: boolean;
   clientId?: string;
   clientName: string;
