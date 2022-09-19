@@ -164,6 +164,17 @@ export const useTimeRangeOptional = (name: string, description: string) => {
   return timeRanges.find((value) => value.name === tmp) ?? timeRanges[0];
 };
 
+const defaultCurrencies: Currency[] = [
+  Currency.USD,
+  Currency.AUD,
+  Currency.CAD,
+  Currency.EUR,
+  Currency.NZD,
+  Currency.GBP,
+  Currency.JPY,
+  Currency.CNY,
+];
+
 /**
  * Wrapper for the useString hook to retrieve a currency.
  *
@@ -173,11 +184,18 @@ export const useTimeRangeOptional = (name: string, description: string) => {
 export const useCurrencyOptional = (name: string, description: string) => {
   const tmp: string | null = useString(name, description, {
     required: false,
-    autocomplete: () =>
-      CURRENCIES.filter((value) => value.toLowerCase().includes(tmp?.toLowerCase() ?? "")).map((value) => ({
-        name: value,
-        value: value,
-      })),
+    autocomplete: () => {
+      const currencies = tmp
+        ? CURRENCIES.filter((value) => value.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
+        : defaultCurrencies;
+
+      return currencies
+        .map((value) => ({
+          name: value,
+          value: value,
+        }))
+        .slice(0, 25);
+    },
   });
   return CURRENCIES.find((value) => value === tmp) ?? Currency.USD;
 };

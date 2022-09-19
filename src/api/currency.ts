@@ -174,6 +174,12 @@ export enum Currency {
   ZWL = "ZWL",
 }
 
+export const formatCurrency = (currency: Currency, value: number): string =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(value);
+
 export const CURRENCIES: Currency[] = Object.values(Currency);
 
 export class CurrencyAPI extends APIClient {
@@ -186,7 +192,6 @@ export class CurrencyAPI extends APIClient {
   }
 
   async convert(from: CurrencyPair, to: Currency): Promise<CurrencyPair> {
-    // TODO: Implement
     if (from.currency === to) {
       return from;
     }

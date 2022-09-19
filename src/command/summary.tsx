@@ -20,6 +20,7 @@ import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
 import { ReportDataSummaryField } from "@/discord/components/summary";
 import { SuccessMessage } from "@/discord/components";
+import { currencyAPI, formatCurrency } from "@/api/currency";
 
 function summaryProject(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for a specific project.");
@@ -28,6 +29,7 @@ function summaryProject(): CommandHandler<Env> {
   const projectId = useProject("project", "The project to fetch.", workspaceId);
   const userId = useUserOptional("user", "The user to fetch.", workspaceId);
   const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+  const currency = useCurrencyOptional("currency", "The currency to use.");
 
   return async function* (interaction, env) {
     yield;
@@ -40,7 +42,9 @@ function summaryProject(): CommandHandler<Env> {
     const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
     const rate = project.hourlyRate ?? (await interactions.getHourlyRate(workspace, user));
-    const summary = getProjectSummary(timeEntries, project, rate);
+    const convertedRate = await currencyAPI.convert(rate, currency);
+
+    const summary = getProjectSummary(timeEntries, project, convertedRate);
     if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
     const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
@@ -49,18 +53,19 @@ function summaryProject(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Project Summary • ${project.name}`}
-        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: ${formatCurrency(currency, totalMoney)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for {user.name}.
         {estimatedTotal
-          ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${
+          ? ` They are projected to earn ${formatCurrency(currency, estimatedTotal)} ${
               timeRange.sentenceName
             } on this project.`
           : ""}
         <ReportDataSummaryField
           data={summary}
+          currency={currency}
           titleProvider={(elapsed, price) =>
-            `Time Entries - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+            `Time Entries - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
           }
         />
       </SuccessMessage>
@@ -74,6 +79,7 @@ function summaryWorkspace(): CommandHandler<Env> {
   const workspaceId = useWorkspace("workspace", "The workspace to fetch.");
   const userId = useUserOptional("user", "The user to fetch.", workspaceId);
   const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+  const currency = useCurrencyOptional("currency", "The currency to use.");
 
   return async function* (interaction, env) {
     yield;
@@ -86,7 +92,9 @@ function summaryWorkspace(): CommandHandler<Env> {
     const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
     const rate = await interactions.getHourlyRate(workspace, user);
-    const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
+    const convertedRate = await currencyAPI.convert(rate, currency);
+
+    const summary = getWorkspaceSummary(timeEntries, projects, workspace, convertedRate);
     if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
     const projectSummary = _.groupBy(summary, (value) => value.projectName);
@@ -96,16 +104,19 @@ function summaryWorkspace(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Workspace Summary • ${workspace.name}`}
-        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: ${formatCurrency(currency, totalMoney)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} for `{user.name}`.
         {estimatedTotal
-          ? ` They are projected to earn $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
+          ? ` They are projected to earn ${formatCurrency(currency, estimatedTotal)} ${timeRange.sentenceName}.`
           : ""}
         {Object.entries(projectSummary).map(([projectName, projectSummary]) => (
           <ReportDataSummaryField
             data={projectSummary}
-            titleProvider={(elapsed, price) => `${projectName} - ${formatElapsed(elapsed)} • $${round(price, 2)}`}
+            currency={currency}
+            titleProvider={(elapsed, price) =>
+              `${projectName} - ${formatElapsed(elapsed)} • ${formatCurrency(currency, price)}`
+            }
           />
         ))}
       </SuccessMessage>
@@ -118,6 +129,7 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
 
   const workspaceId = useWorkspace("workspace", "The workspace to fetch.");
   const timeRange = useTimeRangeOptional("time", "The time range to fetch.");
+  const currency = useCurrencyOptional("currency", "The currency to use.");
 
   return async function* (interaction, env) {
     yield;
@@ -135,9 +147,10 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
 
           const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
           const rate = await interactions.getHourlyRate(workspace, user);
+          const convertedRate = await currencyAPI.convert(rate, currency);
 
           const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, range);
-          const summary = getWorkspaceSummary(timeEntries, projects, workspace, rate);
+          const summary = getWorkspaceSummary(timeEntries, projects, workspace, convertedRate);
           return summary.map((value) => ({ ...value, userName: user.name } as ReportData));
         }),
       ),
@@ -155,17 +168,18 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
     return (
       <SuccessMessage
         author={`Workspace User Summary • ${workspace.name}`}
-        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: ${formatCurrency(currency, totalMoney)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName} across all workspace users.
         {estimatedTotal
-          ? ` The projected total is $${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}.`
+          ? ` The projected total is ${formatCurrency(currency, estimatedTotal)} ${timeRange.sentenceName}.`
           : ""}
         {userSummary.map((userSummary) => (
           <ReportDataSummaryField
             data={userSummary}
+            currency={currency}
             titleProvider={(elapsed, price) =>
-              `${userSummary[0].userName ?? "User"} - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+              `${userSummary[0].userName ?? "User"} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
             }
           />
         ))}
@@ -195,7 +209,9 @@ function summaryAll(): CommandHandler<Env> {
         if (!timeEntries.length) return [];
 
         const rate = await interactions.getHourlyRate(workspace, user);
-        return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, rate))
+        const convertedRate = await currencyAPI.convert(rate, currency);
+
+        return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, convertedRate))
           .filter((value) => value.price > 0)
           .sortBy((value) => -value.durationMS)
           .value();
@@ -220,26 +236,27 @@ function summaryAll(): CommandHandler<Env> {
 
     const stats = [
       ["Avg. Hours/Day", `${round(averageHoursPerDay, 2).toFixed(2)} hours`],
-      ["Avg. Hourly Rate", `$${round(averageHourlyRate, 2).toFixed(2)}/hr`],
+      ["Avg. Hourly Rate", `${formatCurrency(currency, averageHourlyRate)}/hr`],
       [`% Worked of ${timeRange.sentenceName}`, `${round(percentWorked, 2)}%`],
     ];
 
     if (estimatedTotal) {
-      stats.push(["Projected Earnings", `$${round(estimatedTotal, 2).toFixed(2)} ${timeRange.sentenceName}`]);
+      stats.push(["Projected Earnings", `${formatCurrency(currency, estimatedTotal)} ${timeRange.sentenceName}`]);
     }
 
     return (
       <SuccessMessage
         author={`Summary • ${user.name}`}
-        footer={`Total: $${round(totalMoney, 2).toFixed(2)} • ${formatElapsed(totalElapsed)}`}
+        footer={`Total: ${formatCurrency(currency, totalMoney)} • ${formatElapsed(totalElapsed)}`}
       >
         Showing time entries for {timeRange.sentenceName}.
         <Field name="Summary">{stats.map(([name, value]) => ` **•** \`${name}\`: ${value}`).join("\n")}</Field>
         {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => (
           <ReportDataSummaryField
             data={workspaceSummary}
+            currency={currency}
             titleProvider={(elapsed, price) =>
-              `${workspaceName} - $${round(price, 2).toFixed(2)} • ${formatElapsed(elapsed)}`
+              `${workspaceName} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
             }
           />
         ))}
