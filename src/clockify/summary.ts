@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { PayRate, Project, ReportData, TimeEntry, TimeInterval, Workspace } from "./types";
+import { CurrencyPair, Project, ReportData, TimeEntry, TimeInterval, Workspace } from "./types";
 import { TimeRangeDefinition } from "@/clockify/times";
 
 /**
@@ -20,7 +20,7 @@ const getDuration = (timeInterval: TimeInterval): number => {
  * @param rate The rate to use for the project.
  * @returns A list of ReportData objects, grouped by description.
  */
-export const getProjectSummary = (timeEntries: TimeEntry[], project: Project, rate: PayRate): ReportData[] => {
+export const getProjectSummary = (timeEntries: TimeEntry[], project: Project, rate: CurrencyPair): ReportData[] => {
   // Find relevant project entries
   const projectEntries = timeEntries.filter((t) => t.projectId === project.id);
   return _.chain(projectEntries)
@@ -55,7 +55,7 @@ export const getWorkspaceSummary = (
   timeEntries: TimeEntry[],
   projects: Project[],
   workspace: Workspace,
-  rate: PayRate,
+  rate: CurrencyPair,
 ): ReportData[] => {
   // Find relevant workspace entries
   const projectIds = projects.map((p) => p.id);

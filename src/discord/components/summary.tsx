@@ -1,28 +1,30 @@
 import { ReportData } from "@/clockify";
 import { formatElapsed } from "@/util";
-import _, { round } from "lodash";
+import _ from "lodash";
 import { createElement, Field } from "@zerite/slshx";
+import { Currency, formatCurrency } from "@/api/currency";
 
-export const ReportDataDetails = (props: { data: ReportData }) => {
-  const { data } = props;
+export const ReportDataDetails = (props: { data: ReportData; currency: Currency }) => {
+  const { data, currency } = props;
 
   const elapsed = formatElapsed(data.durationMS);
-  const price = round(data.price, 2).toFixed(2);
+  const price = formatCurrency(currency, data.price);
 
   const prefix = data.clientName.length ? `${data.clientName}: ` : "";
   const description = data.description ?? "Other";
 
-  return ` **•** \`${prefix}${data.projectName}\` ${description} (${elapsed}): $${price}`;
+  return ` **•** \`${prefix}${data.projectName}\` ${description} (${elapsed}): ${price}`;
 };
 
 interface ReportDataSummaryFieldProps {
   data: ReportData[];
+  currency: Currency;
   titleProvider: (elapsed: number, price: number) => string;
   headerSize?: number;
 }
 
 export const ReportDataSummaryField = (props: ReportDataSummaryFieldProps) => {
-  const { data, headerSize = 3 } = props;
+  const { data, currency, headerSize = 3 } = props;
 
   const sorted = _.sortBy(data, (value) => -value.durationMS);
 
@@ -35,13 +37,14 @@ export const ReportDataSummaryField = (props: ReportDataSummaryFieldProps) => {
   const footerDuration = _.sumBy(footerData, (value) => value.durationMS);
 
   const title = props.titleProvider(headerDuration + footerDuration, headerTotal + footerTotal);
-  const footer = `*... and ${footerData.length} more projects for $${round(footerTotal, 2).toFixed(2)} (${formatElapsed(
-    footerDuration,
-  )})...*`;
+  const footer = `*... and ${footerData.length} more projects for ${formatCurrency(
+    currency,
+    footerTotal,
+  )} (${formatElapsed(footerDuration)})...*`;
 
   return (
     <Field name={title}>
-      {headerData.map((value) => <ReportDataDetails data={value} />).join("\n")}
+      {headerData.map((value) => <ReportDataDetails currency={currency} data={value} />).join("\n")}
       {footerData.length ? `\n${footer}` : ""}
     </Field>
   );
