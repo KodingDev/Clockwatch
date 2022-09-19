@@ -20,7 +20,7 @@ import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
 import { ReportDataSummaryField } from "@/discord/components/summary";
 import { SuccessMessage } from "@/discord/components";
-import { currencyAPI, formatCurrency } from "@/api/currency";
+import { formatCurrency } from "@/api/currency";
 
 function summaryProject(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for a specific project.");
@@ -42,9 +42,7 @@ function summaryProject(): CommandHandler<Env> {
     const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
     const rate = project.hourlyRate ?? (await interactions.getHourlyRate(workspace, user));
-    const convertedRate = await currencyAPI.convert(rate, currency);
-
-    const summary = getProjectSummary(timeEntries, project, convertedRate);
+    const summary = await getProjectSummary(timeEntries, project, rate, currency);
     if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
     const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
@@ -92,9 +90,7 @@ function summaryWorkspace(): CommandHandler<Env> {
     const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, timeRange.get());
 
     const rate = await interactions.getHourlyRate(workspace, user);
-    const convertedRate = await currencyAPI.convert(rate, currency);
-
-    const summary = getWorkspaceSummary(timeEntries, projects, workspace, convertedRate);
+    const summary = await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency);
     if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
     const projectSummary = _.groupBy(summary, (value) => value.projectName);
@@ -147,10 +143,9 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
 
           const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
           const rate = await interactions.getHourlyRate(workspace, user);
-          const convertedRate = await currencyAPI.convert(rate, currency);
 
           const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, range);
-          const summary = getWorkspaceSummary(timeEntries, projects, workspace, convertedRate);
+          const summary = await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency);
           return summary.map((value) => ({ ...value, userName: user.name } as ReportData));
         }),
       ),
@@ -209,9 +204,7 @@ function summaryAll(): CommandHandler<Env> {
         if (!timeEntries.length) return [];
 
         const rate = await interactions.getHourlyRate(workspace, user);
-        const convertedRate = await currencyAPI.convert(rate, currency);
-
-        return _.chain(getWorkspaceSummary(timeEntries, projects, workspace, convertedRate))
+        return _.chain(await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency))
           .filter((value) => value.price > 0)
           .sortBy((value) => -value.durationMS)
           .value();

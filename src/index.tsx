@@ -5,6 +5,10 @@ import { ErrorMessage } from "@/discord/components";
 
 const errorHandler: ErrorHandler = (error) => {
   if (error instanceof BotError) {
+    if (error.debug) {
+      console.error(`[ERROR] ${error.message} | ${error.debug}`);
+    }
+
     return <ErrorMessage>{error.message}</ErrorMessage>;
   }
 

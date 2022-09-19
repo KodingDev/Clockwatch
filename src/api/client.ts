@@ -34,7 +34,8 @@ export abstract class APIClient {
     });
 
     if (response.status === 401 || response.status === 403) throw new BotError(BotErrorCode.InvalidApiKey);
-    if (response.status !== 200) throw new BotError(BotErrorCode.UnknownError);
+    if (response.status !== 200)
+      throw new BotError(BotErrorCode.UnknownError, `API returned status code ${response.status}`);
 
     return response.json();
   }

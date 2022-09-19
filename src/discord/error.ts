@@ -32,7 +32,7 @@ const ErrorMessages: Record<BotErrorCode, string> = {
 };
 
 export class BotError extends Error {
-  constructor(public readonly code: BotErrorCode) {
+  constructor(public readonly code: BotErrorCode, public readonly debug?: string) {
     super(ErrorMessages[code]);
   }
 }
