@@ -1,7 +1,8 @@
 import { useString } from "@zerite/slshx";
-import { Project, timeRanges, User, UserInteractions, Workspace } from "@/clockify";
 import { getInteractionUser } from "@/util";
-import { CURRENCIES, Currency } from "@/api/currency";
+import { CURRENCIES, Currency } from "@/api/client";
+import { Project, User, Workspace } from "@/api/generic";
+import { TIME_RANGES, UserInteractions } from "@/api";
 
 /**
  * Wrapper for the useString hook to retrieve a workspace for the user, and
@@ -68,12 +69,12 @@ export const useProject = (name: string, description: string, workspace?: string
               if (workspace) {
                 // If we have a workspace, return to the format of "Client - Project"
                 return {
-                  name: `${value.clientName} - ${value.name}`,
+                  name: `${value.client?.name ?? "Unknown"} - ${value.name}`,
                   value: value.id,
                 };
               } else {
                 // Otherwise return to the format of "Workspace - Project"
-                const workspace = workspaces.find((w) => w.id === value.workspaceId)!;
+                const workspace = workspaces.find((w) => w.id === value.workspace?.id)!;
                 return {
                   name: `${workspace.name} - ${value.name}`,
                   value: value.id,
@@ -128,9 +129,8 @@ export const useUserOptional = (name: string, description: string, workspace?: s
                 return { name: value.name, value: value.id };
               } else {
                 // Otherwise return to the format of "Workspace - User"
-                const workspace = workspaces.find((w) =>
-                  value.memberships.find((m) => m.targetId === w.id && m.membershipType === "WORKSPACE"),
-                )!;
+                const workspace = workspaces.find((w) => value.workspaces?.find((m) => m.id === w.id));
+                if (!workspace) return undefined;
 
                 return {
                   name: `${workspace.name} - ${value.name}`,
@@ -138,6 +138,8 @@ export const useUserOptional = (name: string, description: string, workspace?: s
                 };
               }
             })
+            .filter((value) => value !== undefined)
+            .map((value) => value!)
         );
       } catch (e) {
         return [];
@@ -157,11 +159,12 @@ export const useTimeRangeOptional = (name: string, description: string) => {
   const tmp: string | null = useString(name, description, {
     required: false,
     autocomplete: () =>
-      timeRanges
-        .filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? ""))
-        .map((value) => ({ name: value.name, value: value.name })),
+      TIME_RANGES.filter((value) => value.name.toLowerCase().includes(tmp?.toLowerCase() ?? "")).map((value) => ({
+        name: value.name,
+        value: value.name,
+      })),
   });
-  return timeRanges.find((value) => value.name === tmp) ?? timeRanges[0];
+  return TIME_RANGES.find((value) => value.name === tmp) ?? TIME_RANGES[0];
 };
 
 const defaultCurrencies: Currency[] = [

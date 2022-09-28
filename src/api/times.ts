@@ -36,7 +36,7 @@ const defaultProgressFunction = (range: TimeRange): number => {
   return Math.min(1, current / total);
 };
 
-export const timeRanges: TimeRangeDefinition[] = [
+export const TIME_RANGES: TimeRangeDefinition[] = [
   {
     name: "This Month",
     sentenceName: "this month",

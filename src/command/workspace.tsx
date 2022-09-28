@@ -1,8 +1,8 @@
 import { CommandHandler, createElement, Field, useDescription } from "@zerite/slshx";
-import { UserInteractions } from "@/clockify";
 import { useWorkspace } from "@/discord";
 import { getInteractionUser } from "@/util";
 import { SuccessMessage } from "@/discord/components";
+import { UserInteractions } from "@/api";
 
 function info(): CommandHandler<Env> {
   useDescription("Fetch information on a specific workspace.");
@@ -15,7 +15,7 @@ function info(): CommandHandler<Env> {
 
     return (
       <SuccessMessage title="Workspace">
-        The workspace `{workspace.name}` has {workspace.memberships.length} members.
+        The workspace `{workspace.name}` has {workspace.users?.length ?? 0} members.
         <Field name={`Projects (${projects.length})`}>{projects.map((value) => value.name).join(", ")}</Field>
       </SuccessMessage>
     );

@@ -9,7 +9,6 @@
     ],
     "types": [
       "@cloudflare/workers-types",
-      "@zerite/slshx/node_modules/discord-api-types",
       "discord-api-types"
     ],
     // For Slshx JSX
@@ -26,7 +25,11 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@zerite/slshx/node_modules/@types"
+    ]
   },
   "include": [
     "src",

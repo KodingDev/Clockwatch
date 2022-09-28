@@ -1,5 +1,5 @@
 import { APIClient } from "@/api/client";
-import { CurrencyPair } from "@/clockify";
+import { CurrencyPair } from "@/api/generic";
 
 // noinspection JSUnusedGlobalSymbols
 export enum Currency {
@@ -204,14 +204,6 @@ export class CurrencyAPI extends APIClient {
       amount: amount * rate,
       currency: to,
     };
-  }
-
-  async getCacheId(): Promise<string> {
-    return "";
-  }
-
-  async getHeaders(): Promise<Record<string, string>> {
-    return {};
   }
 }
 

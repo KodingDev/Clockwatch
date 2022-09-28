@@ -8,19 +8,12 @@ import {
   useUserOptional,
   useWorkspace,
 } from "@/discord";
-import {
-  estimateTotal,
-  getProjectSummary,
-  getSummaryTotals,
-  getWorkspaceSummary,
-  ReportData,
-  UserInteractions,
-} from "@/clockify";
 import { formatElapsed, getInteractionUser } from "@/util";
 import _, { round } from "lodash";
-import { ReportDataSummaryField } from "@/discord/components/summary";
-import { SuccessMessage } from "@/discord/components";
-import { formatCurrency } from "@/api/currency";
+import { ReportDataSummaryField, SuccessMessage } from "@/discord/components";
+import { formatCurrency } from "@/api/client";
+import { UserInteractions } from "@/api";
+import { estimateTotal, getProjectSummary, getSummaryTotals, getWorkspaceSummary, TimeEntry } from "@/api/generic";
 
 function summaryProject(): CommandHandler<Env> {
   useDescription("Fetch clocked time summary for a specific project.");
@@ -93,7 +86,7 @@ function summaryWorkspace(): CommandHandler<Env> {
     const summary = await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency);
     if (!summary.length) throw new BotError(BotErrorCode.NoTimeEntries);
 
-    const projectSummary = _.groupBy(summary, (value) => value.projectName);
+    const projectSummary = _.groupBy(summary, (value) => value.project?.name);
     const { elapsed: totalElapsed, money: totalMoney } = getSummaryTotals(summary);
     const estimatedTotal = estimateTotal(summary, timeRange);
 
@@ -138,22 +131,18 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
 
     const summaries = _.flatten(
       await Promise.all(
-        workspace.memberships.map(async (membership) => {
-          if (membership.membershipType !== "WORKSPACE") return [];
-
-          const user = await interactions.clockify.getUserById(workspaceId, membership.userId);
+        workspace.users?.map(async (user) => {
           const rate = await interactions.getHourlyRate(workspace, user);
-
           const timeEntries = await interactions.clockify.getTimeEntriesFromRange(workspaceId, user.id, range);
           const summary = await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency);
-          return summary.map((value) => ({ ...value, userName: user.name } as ReportData));
-        }),
+          return summary.map((value) => ({ ...value, user } as TimeEntry));
+        }) ?? [],
       ),
     );
 
     if (!summaries.length) throw new BotError(BotErrorCode.NoTimeEntries);
     const userSummary = _.chain(summaries)
-      .groupBy((value) => value.userName)
+      .groupBy((value) => value.user?.name)
       .sortBy((value) => -value.reduce((a, b) => a + b.durationMS, 0))
       .value();
 
@@ -174,7 +163,7 @@ function summaryWorkspaceUsers(): CommandHandler<Env> {
             data={userSummary}
             currency={currency}
             titleProvider={(elapsed, price) =>
-              `${userSummary[0].userName ?? "User"} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
+              `${userSummary[0].user?.name ?? "User"} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
             }
           />
         ))}
@@ -205,7 +194,7 @@ function summaryAll(): CommandHandler<Env> {
 
         const rate = await interactions.getHourlyRate(workspace, user);
         return _.chain(await getWorkspaceSummary(timeEntries, projects, workspace, rate, currency))
-          .filter((value) => value.price > 0)
+          .filter((value) => (value.total ?? 0) > 0)
           .sortBy((value) => -value.durationMS)
           .value();
       }),
@@ -244,15 +233,17 @@ function summaryAll(): CommandHandler<Env> {
       >
         Showing time entries for {timeRange.sentenceName}.
         <Field name="Summary">{stats.map(([name, value]) => ` **•** \`${name}\`: ${value}`).join("\n")}</Field>
-        {Object.entries(_.groupBy(summary, (value) => value.workspaceName)).map(([workspaceName, workspaceSummary]) => (
-          <ReportDataSummaryField
-            data={workspaceSummary}
-            currency={currency}
-            titleProvider={(elapsed, price) =>
-              `${workspaceName} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
-            }
-          />
-        ))}
+        {Object.entries(_.groupBy(summary, (value) => value.workspace?.name)).map(
+          ([workspaceName, workspaceSummary]) => (
+            <ReportDataSummaryField
+              data={workspaceSummary}
+              currency={currency}
+              titleProvider={(elapsed, price) =>
+                `${workspaceName} - ${formatCurrency(currency, price)} • ${formatElapsed(elapsed)}`
+              }
+            />
+          ),
+        )}
       </SuccessMessage>
     );
   };

@@ -3,13 +3,17 @@ import { BotError, BotErrorCode } from "@/discord";
 export abstract class APIClient {
   protected constructor(private readonly base: string) {}
 
-  abstract getCacheId(): Promise<string>;
+  getCacheId(): Promise<string> {
+    return Promise.resolve("");
+  }
 
-  abstract getHeaders(): Promise<Record<string, string>>;
+  getHeaders(): Promise<Record<string, string>> {
+    return Promise.resolve({});
+  }
 
   /**
    * Performs a GET request to an API.
-   * This method automatically adds the any headers to the request and
+   * This method automatically adds any headers to the request and
    * will cache the response for 1 minute.
    *
    * @param path The path to the endpoint

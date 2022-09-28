@@ -1,15 +1,15 @@
 import { APIUser } from "discord-api-types/v9";
-import { ClockifyAPI } from "./api";
-import { CurrencyPair, User, Workspace } from "@/clockify/types";
+import { ClockifyAPI } from "./clockify/api";
 import { round } from "lodash";
-import { Currency } from "@/api/currency";
+import { Currency } from "@/api/client";
+import { CurrencyPair, TimeTracker, User, Workspace } from "@/api/generic";
 
 /**
  * Handles mostly KV interactions with Cloudflare and passes
  * the data to the Clockify API.
  */
 export class UserInteractions {
-  readonly clockify: ClockifyAPI;
+  readonly clockify: TimeTracker;
 
   constructor(private readonly kv: KVNamespace, readonly user: APIUser) {
     this.clockify = new ClockifyAPI(this);
@@ -61,7 +61,7 @@ export class UserInteractions {
    */
   public async getDefaultRateObject(): Promise<CurrencyPair> {
     return {
-      amount: Math.round((await this.getDefaultRate()) * 100),
+      amount: await this.getDefaultRate(),
       currency: Currency.USD,
     };
   }
