@@ -34,7 +34,7 @@ export default {
     const cloned = request.clone();
 
     try {
-      return handler(request, env, ctx);
+      return await handler(request, env, ctx);
     } catch (error) {
       if (env.SENTRY_DSN) {
         const sentry = new Toucan({

@@ -387,10 +387,10 @@
     "@typescript-eslint/types" "5.36.2"
     eslint-visitor-keys "^3.3.0"
 
-"@zerite/slshx@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@zerite/slshx/-/slshx-0.3.1.tgz#69b5a7aedbf3ce9c25a6f262a259b26068cdd680"
-  integrity sha512-HsMfBxchnS2oULbLC1nHEThdN1SxrRu3uiDUY9YxF4KyDHtoah3WQUFEV2oChovwtiyJCWpzFmSG+onRImWIKA==
+"@zerite/slshx@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@zerite/slshx/-/slshx-0.3.2.tgz#304d6b0a77e8d36ddbbca4d6dbbc5f38f5ca7808"
+  integrity sha512-1nKzI+s2sUrzDu7fUKmE6GqLGwL26U+d8PllRdmJRG612ovfDY54lGlNid9tObDB50MwB8KhpPGFD3AdM8UD9w==
   dependencies:
     discord-api-types "0.27.0"
 

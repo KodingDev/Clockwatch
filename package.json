@@ -17,7 +17,7 @@
     "lint:compile": "tsc --noEmit"
   },
   "dependencies": {
-    "@zerite/slshx": "^0.3.1",
+    "@zerite/slshx": "^0.3.2",
     "lodash": "^4.17.21",
     "toucan-js": "^2.7.0"
   },
