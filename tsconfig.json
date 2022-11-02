@@ -9,7 +9,8 @@
     ],
     "types": [
       "@cloudflare/workers-types",
-      "discord-api-types"
+      "discord-api-types",
+      "toucan-js"
     ],
     // For Slshx JSX
     "jsx": "react",
