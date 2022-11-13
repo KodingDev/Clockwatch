@@ -183,12 +183,20 @@ export const formatCurrency = (currency: Currency, value: number): string =>
 export const CURRENCIES: Currency[] = Object.values(Currency);
 
 export class CurrencyAPI extends APIClient {
+  private cachedRates: Map<Currency, LatestRatesResponse> = new Map();
+
   constructor() {
     super("https://api.exchangerate.host");
   }
 
   async getLatestRates(base: Currency): Promise<LatestRatesResponse> {
-    return this.get(`/latest?base=${base}`);
+    // Manually cache
+    const cached = this.cachedRates.get(base);
+    if (cached) return cached;
+
+    const res = await this.get(`/latest?base=${base}`);
+    this.cachedRates.set(base, res);
+    return res;
   }
 
   async convert(from: CurrencyPair, to: Currency): Promise<CurrencyPair> {
