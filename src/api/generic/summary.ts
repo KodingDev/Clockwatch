@@ -102,6 +102,7 @@ export const getWorkspaceSummary = async (
           description: description.length ? description : undefined,
           total: durationMS * (convertedRate.amount / 3600000),
           durationMS,
+          workspace,
         };
       })
       .value();

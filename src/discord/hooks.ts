@@ -69,7 +69,7 @@ export const useProject = (name: string, description: string, workspace?: string
               if (workspace) {
                 // If we have a workspace, return to the format of "Client - Project"
                 return {
-                  name: `${value.client?.name ?? "Unknown"} - ${value.name}`,
+                  name: `${value.client?.name ?? "No client"} - ${value.name}`,
                   value: value.id,
                 };
               } else {

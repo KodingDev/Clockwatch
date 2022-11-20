@@ -13,7 +13,7 @@ export const ReportDataDetails = (props: { data: TimeEntry; currency: Currency }
   const prefix = data.project?.client ? `${data.project.client.name}: ` : "";
   const description = data.description ?? "Other";
 
-  return ` **•** \`${prefix}${data.project?.name ?? "Unknown"}\` ${description} (${elapsed}): ${price}`;
+  return ` **•** \`${prefix}${data.project?.name ?? "No project"}\` ${description} (${elapsed}): ${price}`;
 };
 
 interface ReportDataSummaryFieldProps {
